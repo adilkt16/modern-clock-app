@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Modern Clock</string>
+    <string name="clock">Clock</string>
+    <string name="alarm">Alarm</string>
+    <string name="timer">Timer</string>
+    <string name="stopwatch">Stopwatch</string>
+    <string name="world_clock">World Clock</string>
+    <string name="digital_clock">Digital</string>
+    <string name="analog_clock">Analog</string>
+    <string name="set_alarm">Set Alarm</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="reset">Reset</string>
+    <string name="lap">Lap</string>
+    <string name="hour">Hour</string>
+    <string name="minute">Minute</string>
+    <string name="second">Second</string>
+    <string name="time_format_12">12H</string>
+    <string name="time_format_24">24H</string>
+    <string name="settings">Settings</string>
+</resources>

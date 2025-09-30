@@ -1,0 +1,65 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle files
+gradle.properties
+*.iml
+.gradle/
+/local.properties
+/build
+build/
+
+# Android Studio/IntelliJ files
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/.idea/dictionaries
+.idea/gradle.xml
+.idea/tasks.xml
+
+# Log Files
+*.log
+
+# Android Studio captures folder
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Backup files
+*~
+*.swp
+*.bak
+
+# Android Profiling
+*.hprof
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/readme.md
