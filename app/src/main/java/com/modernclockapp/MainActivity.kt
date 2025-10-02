@@ -8,12 +8,16 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Typeface
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
+import android.view.ViewGroup
 import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -42,50 +46,99 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Create scrollable layout
+        // Main container with gradient background
+        val mainLayout = FrameLayout(this).apply {
+            setBackgroundResource(R.drawable.bg_futuristic_gradient)
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+        
+        // Scrollable content
         val scrollView = ScrollView(this)
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(40, 40, 40, 40)
+            setPadding(32, 60, 32, 60)
         }
         
-        // Title
+        // Futuristic Title with neon glow
         val title = TextView(this).apply {
-            text = "🕒 Modern Clock App"
-            textSize = 28f
+            text = "⚡ CYBER CLOCK"
+            textSize = 36f
+            setTextColor(Color.parseColor("#00D9FF"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            setPadding(0, 0, 0, 30)
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, 40)
+            setShadowLayer(20f, 0f, 0f, Color.parseColor("#00D9FF"))
         }
         
-        // Time display
+        // Glass card for clock display
+        val clockCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.bg_glass_card)
+            setPadding(40, 50, 40, 50)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 30)
+            }
+        }
+        
+        // Time display with neon effect
         timeDisplay = TextView(this).apply {
-            textSize = 42f
+            textSize = 56f
+            setTextColor(Color.parseColor("#FFFFFF"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            setShadowLayer(30f, 0f, 0f, Color.parseColor("#6C5CE7"))
         }
         
         // Date display
         dateDisplay = TextView(this).apply {
-            textSize = 20f
+            textSize = 18f
+            setTextColor(Color.parseColor("#B0B8D4"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            setPadding(0, 10, 0, 30)
+            setPadding(0, 20, 0, 0)
+            letterSpacing = 0.1f
         }
         
-        // Alarm section
+        clockCard.addView(timeDisplay)
+        clockCard.addView(dateDisplay)
+        
+        // Alarm section title
         val alarmTitle = TextView(this).apply {
-            text = "⏰ Set Alarm"
-            textSize = 22f
+            text = "⏰ ALARM CONTROL"
+            textSize = 20f
+            setTextColor(Color.parseColor("#00D9FF"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            setPadding(0, 20, 0, 20)
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 40, 0, 30)
+            letterSpacing = 0.15f
         }
         
-        // Time picker
+        // Glass card for alarm controls
+        val alarmCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.bg_glass_card)
+            setPadding(30, 30, 30, 30)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 30)
+            }
+        }
+        
+        // Time picker with futuristic styling
         timePicker = TimePicker(this).apply {
             setIs24HourView(true)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                gravity = android.view.Gravity.CENTER
+                gravity = Gravity.CENTER
             }
         }
         
@@ -96,58 +149,69 @@ class MainActivity : Activity() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                gravity = android.view.Gravity.CENTER
+                setMargins(0, 30, 0, 0)
             }
         }
         
-        // Set alarm button
+        // Set alarm button with neon gradient
         setAlarmButton = Button(this).apply {
-            text = "🔔 Set Alarm"
+            text = "SET ALARM"
             textSize = 16f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.DEFAULT_BOLD
+            setBackgroundResource(R.drawable.bg_neon_button)
             layoutParams = LinearLayout.LayoutParams(
                 0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                120,
                 1f
             ).apply {
-                setMargins(0, 0, 10, 0)
+                setMargins(0, 0, 15, 0)
             }
         }
         
-        // Clear alarm button
+        // Clear alarm button with outline style
         clearAlarmButton = Button(this).apply {
-            text = "🔕 Clear Alarm"
+            text = "CLEAR"
             textSize = 16f
+            setTextColor(Color.parseColor("#00D9FF"))
+            typeface = Typeface.DEFAULT_BOLD
+            setBackgroundResource(R.drawable.bg_outline_button)
             layoutParams = LinearLayout.LayoutParams(
                 0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                120,
                 1f
             ).apply {
-                setMargins(10, 0, 0, 0)
+                setMargins(15, 0, 0, 0)
             }
         }
         
         buttonContainer.addView(setAlarmButton)
         buttonContainer.addView(clearAlarmButton)
         
-        // Alarm status
+        alarmCard.addView(timePicker)
+        alarmCard.addView(buttonContainer)
+        
+        // Alarm status display
         alarmTimeText = TextView(this).apply {
-            text = "No alarm set"
+            text = "NO ALARM SET"
             textSize = 16f
+            setTextColor(Color.parseColor("#B0B8D4"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            setPadding(0, 20, 0, 0)
+            setPadding(20, 30, 20, 20)
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
+            letterSpacing = 0.1f
         }
         
         // Add all views
         layout.addView(title)
-        layout.addView(timeDisplay)
-        layout.addView(dateDisplay)
+        layout.addView(clockCard)
         layout.addView(alarmTitle)
-        layout.addView(timePicker)
-        layout.addView(buttonContainer)
+        layout.addView(alarmCard)
         layout.addView(alarmTimeText)
         
         scrollView.addView(layout)
-        setContentView(scrollView)
+        mainLayout.addView(scrollView)
+        setContentView(mainLayout)
         
         // Button listeners
         setAlarmButton.setOnClickListener {
@@ -160,10 +224,10 @@ class MainActivity : Activity() {
         
         // Request notification permission if needed (Android 13+)
         maybeRequestNotificationPermission()
-
+        
         // Start time updates
         startTimeUpdate()
-
+        
         // If launched from notification action (dismiss)
         intent?.action?.let { action ->
             if (action == "DISMISS_ALARM") {
@@ -171,7 +235,7 @@ class MainActivity : Activity() {
             }
         }
     }
-
+    
     private fun maybeRequestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -180,7 +244,7 @@ class MainActivity : Activity() {
         }
         createNotificationChannel()
     }
-
+    
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -212,8 +276,8 @@ class MainActivity : Activity() {
         val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
         timeDisplay.text = timeFormat.format(now.time)
         
-        val dateFormat = SimpleDateFormat("EEEE, MMMM dd, yyyy", Locale.getDefault())
-        dateDisplay.text = dateFormat.format(now.time)
+        val dateFormat = SimpleDateFormat("EEEE, MMM dd yyyy", Locale.getDefault())
+        dateDisplay.text = dateFormat.format(now.time).uppercase()
         
         // Check if alarm should trigger
         alarmCalendar?.let { alarm ->
@@ -243,25 +307,28 @@ class MainActivity : Activity() {
             val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
             val alarmTimeStr = timeFormat.format(alarmCalendar!!.time)
             
-            alarmTimeText.text = "⏰ Alarm set for: $alarmTimeStr"
+            alarmTimeText.text = "⚡ ALARM: $alarmTimeStr"
+            alarmTimeText.setTextColor(Color.parseColor("#00FF88"))
             
-            Toast.makeText(this, "🔔 Alarm set for $alarmTimeStr", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "⚡ ALARM ARMED: $alarmTimeStr", Toast.LENGTH_LONG).show()
             
         } catch (e: Exception) {
-            Toast.makeText(this, "Error setting alarm: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "ERROR: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
     
     private fun clearAlarm() {
         alarmCalendar = null
-        alarmTimeText.text = "No alarm set"
+        alarmTimeText.text = "NO ALARM SET"
+        alarmTimeText.setTextColor(Color.parseColor("#B0B8D4"))
         stopAlarmSound()
-        Toast.makeText(this, "🔕 Alarm cleared", Toast.LENGTH_SHORT).show()
+        clearAlarmNotification()
+        Toast.makeText(this, "🔕 ALARM DISARMED", Toast.LENGTH_SHORT).show()
     }
     
     private fun triggerAlarm() {
         isAlarmRinging = true
-
+        
         showAlarmNotification()
         
         // Start playing alarm sound
@@ -317,15 +384,11 @@ class MainActivity : Activity() {
     
     private fun showAlarmDialog() {
         alarmDialog = AlertDialog.Builder(this)
-            .setTitle("⏰ ALARM!")
-            .setMessage("Time to wake up!")
+            .setTitle("⚡ ALARM ACTIVE!")
+            .setMessage("Wake up! Time to rise and shine!")
             .setCancelable(false)
-            .setPositiveButton("Dismiss") { dialog, _ ->
+            .setPositiveButton("DISMISS") { dialog, _ ->
                 dismissAlarm()
-                dialog.dismiss()
-            }
-            .setNegativeButton("Snooze (5 min)") { dialog, _ ->
-                snoozeAlarm()
                 dialog.dismiss()
             }
             .create()
@@ -336,39 +399,24 @@ class MainActivity : Activity() {
     private fun dismissAlarm() {
         stopAlarmSound()
         clearAlarm()
-        Toast.makeText(this, "✅ Alarm dismissed", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "✅ DISMISSED", Toast.LENGTH_SHORT).show()
     }
     
-    private fun snoozeAlarm() {
-        stopAlarmSound()
-        
-        // Set alarm for 5 minutes from now
-        alarmCalendar = Calendar.getInstance().apply {
-            add(Calendar.MINUTE, 5)
-        }
-        
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val snoozeTimeStr = timeFormat.format(alarmCalendar!!.time)
-        
-        alarmTimeText.text = "😴 Snoozed until: $snoozeTimeStr"
-        Toast.makeText(this, "😴 Alarm snoozed for 5 minutes", Toast.LENGTH_LONG).show()
-    }
-
     private fun showAlarmNotification() {
         val openIntent = Intent(this, MainActivity::class.java)
         val openPending = PendingIntent.getActivity(
             this, 0, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
+        
         val dismissIntent = Intent(this, MainActivity::class.java).apply { action = "DISMISS_ALARM" }
         val dismissPending = PendingIntent.getActivity(
             this, 1, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
+        
         val builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("⏰ Alarm Ringing")
-            .setContentText("Tap to open. Dismiss or Snooze from dialog.")
+            .setContentTitle("⚡ CYBER ALARM")
+            .setContentText("Alarm is ringing! Tap to open.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
@@ -379,11 +427,11 @@ class MainActivity : Activity() {
             .setFullScreenIntent(openPending, true)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
             .setVibrate(longArrayOf(1000, 1000))
-
+        
         val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mgr.notify(notificationId, builder.build())
     }
-
+    
     private fun clearAlarmNotification() {
         val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mgr.cancel(notificationId)
