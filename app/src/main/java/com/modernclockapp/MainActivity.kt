@@ -2,12 +2,22 @@ package com.modernclockapp
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.*
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,6 +35,9 @@ class MainActivity : Activity() {
     private var mediaPlayer: MediaPlayer? = null
     private var alarmDialog: AlertDialog? = null
     private var isAlarmRinging = false
+    private val notificationId = 1001
+    private val channelId = "ALARM_CHANNEL"
+    private val requestPostNotif = 2001
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,8 +158,42 @@ class MainActivity : Activity() {
             clearAlarm()
         }
         
+        // Request notification permission if needed (Android 13+)
+        maybeRequestNotificationPermission()
+
         // Start time updates
         startTimeUpdate()
+
+        // If launched from notification action (dismiss)
+        intent?.action?.let { action ->
+            if (action == "DISMISS_ALARM") {
+                dismissAlarm()
+            }
+        }
+    }
+
+    private fun maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), requestPostNotif)
+            }
+        }
+        createNotificationChannel()
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (mgr.getNotificationChannel(channelId) == null) {
+                val channel = NotificationChannel(channelId, "Alarm Notifications", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Alarm ringing alerts"
+                    enableVibration(true)
+                    setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), null)
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                }
+                mgr.createNotificationChannel(channel)
+            }
+        }
     }
     
     private fun startTimeUpdate() {
@@ -214,6 +261,8 @@ class MainActivity : Activity() {
     
     private fun triggerAlarm() {
         isAlarmRinging = true
+
+        showAlarmNotification()
         
         // Start playing alarm sound
         playAlarmSound()
@@ -304,12 +353,48 @@ class MainActivity : Activity() {
         alarmTimeText.text = "😴 Snoozed until: $snoozeTimeStr"
         Toast.makeText(this, "😴 Alarm snoozed for 5 minutes", Toast.LENGTH_LONG).show()
     }
+
+    private fun showAlarmNotification() {
+        val openIntent = Intent(this, MainActivity::class.java)
+        val openPending = PendingIntent.getActivity(
+            this, 0, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val dismissIntent = Intent(this, MainActivity::class.java).apply { action = "DISMISS_ALARM" }
+        val dismissPending = PendingIntent.getActivity(
+            this, 1, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle("⏰ Alarm Ringing")
+            .setContentText("Tap to open. Dismiss or Snooze from dialog.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .setOngoing(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(openPending)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPending)
+            .setFullScreenIntent(openPending, true)
+            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+            .setVibrate(longArrayOf(1000, 1000))
+
+        val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        mgr.notify(notificationId, builder.build())
+    }
+
+    private fun clearAlarmNotification() {
+        val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        mgr.cancel(notificationId)
+    }
     
     override fun onDestroy() {
         super.onDestroy()
         timeUpdateRunnable?.let { handler.removeCallbacks(it) }
         stopAlarmSound()
         alarmDialog?.dismiss()
+        clearAlarmNotification()
     }
     
     override fun onPause() {
