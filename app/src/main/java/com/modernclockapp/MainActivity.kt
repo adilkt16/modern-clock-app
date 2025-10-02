@@ -1,10 +1,9 @@
 package com.modernclockapp
 
 import android.app.Activity
-import android.app.AlarmManager
-import android.app.PendingIntent
+import android.app.AlertDialog
 import android.content.Context
-import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -23,6 +22,9 @@ class MainActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private var timeUpdateRunnable: Runnable? = null
     private var alarmCalendar: Calendar? = null
+    private var mediaPlayer: MediaPlayer? = null
+    private var alarmDialog: AlertDialog? = null
+    private var isAlarmRinging = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +38,7 @@ class MainActivity : Activity() {
         
         // Title
         val title = TextView(this).apply {
-            text = "Modern Clock App"
+            text = "🕒 Modern Clock App"
             textSize = 28f
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             setPadding(0, 0, 0, 30)
@@ -87,7 +89,7 @@ class MainActivity : Activity() {
         
         // Set alarm button
         setAlarmButton = Button(this).apply {
-            text = "Set Alarm"
+            text = "🔔 Set Alarm"
             textSize = 16f
             layoutParams = LinearLayout.LayoutParams(
                 0,
@@ -100,7 +102,7 @@ class MainActivity : Activity() {
         
         // Clear alarm button
         clearAlarmButton = Button(this).apply {
-            text = "Clear Alarm"
+            text = "🔕 Clear Alarm"
             textSize = 16f
             layoutParams = LinearLayout.LayoutParams(
                 0,
@@ -168,9 +170,8 @@ class MainActivity : Activity() {
         
         // Check if alarm should trigger
         alarmCalendar?.let { alarm ->
-            if (now.timeInMillis >= alarm.timeInMillis) {
+            if (now.timeInMillis >= alarm.timeInMillis && !isAlarmRinging) {
                 triggerAlarm()
-                clearAlarm()
             }
         }
     }
@@ -197,7 +198,7 @@ class MainActivity : Activity() {
             
             alarmTimeText.text = "⏰ Alarm set for: $alarmTimeStr"
             
-            Toast.makeText(this, "Alarm set for $alarmTimeStr", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "🔔 Alarm set for $alarmTimeStr", Toast.LENGTH_LONG).show()
             
         } catch (e: Exception) {
             Toast.makeText(this, "Error setting alarm: ${e.message}", Toast.LENGTH_LONG).show()
@@ -207,29 +208,113 @@ class MainActivity : Activity() {
     private fun clearAlarm() {
         alarmCalendar = null
         alarmTimeText.text = "No alarm set"
-        Toast.makeText(this, "Alarm cleared", Toast.LENGTH_SHORT).show()
+        stopAlarmSound()
+        Toast.makeText(this, "🔕 Alarm cleared", Toast.LENGTH_SHORT).show()
     }
     
     private fun triggerAlarm() {
-        // Simple alarm notification using Toast and vibration
-        Toast.makeText(this, "⏰ ALARM! Time to wake up!", Toast.LENGTH_LONG).show()
+        isAlarmRinging = true
         
-        // You can add sound/vibration here if needed
+        // Start playing alarm sound
+        playAlarmSound()
+        
+        // Vibrate
         try {
             val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator.vibrate(android.os.VibrationEffect.createOneShot(2000, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrator.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 500, 1000), 0))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator.vibrate(2000)
+                vibrator.vibrate(longArrayOf(0, 1000, 500, 1000), 0)
             }
         } catch (e: Exception) {
             // Vibration not available
         }
+        
+        // Show alarm dialog
+        showAlarmDialog()
+    }
+    
+    private fun playAlarmSound() {
+        try {
+            mediaPlayer?.release()
+            mediaPlayer = MediaPlayer.create(this, R.raw.sound1)
+            mediaPlayer?.isLooping = true
+            mediaPlayer?.start()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Could not play alarm sound: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun stopAlarmSound() {
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        } catch (e: Exception) {
+            // Sound was not playing
+        }
+        
+        // Stop vibration
+        try {
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            vibrator.cancel()
+        } catch (e: Exception) {
+            // Vibration not available
+        }
+        
+        isAlarmRinging = false
+    }
+    
+    private fun showAlarmDialog() {
+        alarmDialog = AlertDialog.Builder(this)
+            .setTitle("⏰ ALARM!")
+            .setMessage("Time to wake up!")
+            .setCancelable(false)
+            .setPositiveButton("Dismiss") { dialog, _ ->
+                dismissAlarm()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Snooze (5 min)") { dialog, _ ->
+                snoozeAlarm()
+                dialog.dismiss()
+            }
+            .create()
+        
+        alarmDialog?.show()
+    }
+    
+    private fun dismissAlarm() {
+        stopAlarmSound()
+        clearAlarm()
+        Toast.makeText(this, "✅ Alarm dismissed", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun snoozeAlarm() {
+        stopAlarmSound()
+        
+        // Set alarm for 5 minutes from now
+        alarmCalendar = Calendar.getInstance().apply {
+            add(Calendar.MINUTE, 5)
+        }
+        
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val snoozeTimeStr = timeFormat.format(alarmCalendar!!.time)
+        
+        alarmTimeText.text = "😴 Snoozed until: $snoozeTimeStr"
+        Toast.makeText(this, "😴 Alarm snoozed for 5 minutes", Toast.LENGTH_LONG).show()
     }
     
     override fun onDestroy() {
         super.onDestroy()
         timeUpdateRunnable?.let { handler.removeCallbacks(it) }
+        stopAlarmSound()
+        alarmDialog?.dismiss()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Don't stop alarm sound when app goes to background
+        // The alarm should keep ringing
     }
 }
