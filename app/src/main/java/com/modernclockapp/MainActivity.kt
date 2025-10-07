@@ -17,7 +17,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.HapticFeedbackConstants
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.core.app.ActivityCompat
@@ -33,7 +35,12 @@ class MainActivity : Activity() {
     private lateinit var alarmTimeText: TextView
     private lateinit var setAlarmButton: Button
     private lateinit var clearAlarmButton: Button
-    private lateinit var timePicker: TimePicker
+    // New compact time selectors
+    private lateinit var hourPicker: NumberPicker
+    private lateinit var minutePicker: NumberPicker
+    private lateinit var ampmToggle: ToggleButton
+    private var is24hFormat: Boolean = true
+    private var isPm: Boolean = false
     private val handler = Handler(Looper.getMainLooper())
     private var timeUpdateRunnable: Runnable? = null
     private var alarmCalendar: Calendar? = null
@@ -135,16 +142,87 @@ class MainActivity : Activity() {
             }
         }
         
-        // Time picker with futuristic styling
-        timePicker = TimePicker(this).apply {
-            setIs24HourView(true)
+        // Compact time selection row
+        val timeRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        hourPicker = NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 23
+            value = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            setFormatter { String.format("%02d", it) }
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 12, 0) }
+        }
+        val colon = TextView(this).apply {
+            text = ":"
+            textSize = 24f
+            setTextColor(Color.WHITE)
+            setPadding(4, 0, 4, 0)
+        }
+        minutePicker = NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 59
+            value = Calendar.getInstance().get(Calendar.MINUTE)
+            setFormatter { String.format("%02d", it) }
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 12, 0) }
+        }
+        ampmToggle = ToggleButton(this).apply {
+            textOn = "PM"
+            textOff = "AM"
+            text = textOff
+            isChecked = false
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
+        }
+        timeRow.addView(hourPicker)
+        timeRow.addView(colon)
+        timeRow.addView(minutePicker)
+        timeRow.addView(ampmToggle)
+
+        // 24H format toggle row
+        val formatRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.CENTER
+            ).apply { setMargins(0, 16, 0, 8) }
+        }
+        val formatLabel = TextView(this).apply {
+            text = "24H FORMAT"
+            textSize = 14f
+            setTextColor(Color.parseColor("#B0B8D4"))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val formatSwitch = Switch(this).apply { isChecked = true }
+        formatSwitch.setOnCheckedChangeListener { _, isChecked ->
+            is24hFormat = isChecked
+            // Update hour picker range and AM/PM visibility
+            if (is24hFormat) {
+                hourPicker.minValue = 0
+                hourPicker.maxValue = 23
+                ampmToggle.visibility = View.GONE
+                // convert 12h selection to 24h
+                if (isPm && hourPicker.value < 12) hourPicker.value += 12
+                if (!isPm && hourPicker.value == 12) hourPicker.value = 0
+            } else {
+                ampmToggle.visibility = View.VISIBLE
+                // convert 24h to 12h display
+                val h24 = hourPicker.value
+                isPm = h24 >= 12
+                ampmToggle.isChecked = isPm
+                hourPicker.minValue = 1
+                hourPicker.maxValue = 12
+                hourPicker.value = when {
+                    h24 == 0 -> 12
+                    h24 > 12 -> h24 - 12
+                    else -> h24
+                }
             }
         }
+        formatRow.addView(formatLabel)
+        formatRow.addView(formatSwitch)
+
         
         // Buttons container
         val buttonContainer = LinearLayout(this).apply {
@@ -192,8 +270,9 @@ class MainActivity : Activity() {
         buttonContainer.addView(setAlarmButton)
         buttonContainer.addView(clearAlarmButton)
         
-        alarmCard.addView(timePicker)
-        alarmCard.addView(buttonContainer)
+    alarmCard.addView(timeRow)
+    alarmCard.addView(formatRow)
+    alarmCard.addView(buttonContainer)
         
         // Alarm status display
         alarmTimeText = TextView(this).apply {
@@ -288,31 +367,58 @@ class MainActivity : Activity() {
     
     private fun setAlarm() {
         try {
-            val hour = timePicker.hour
-            val minute = timePicker.minute
-            
-            alarmCalendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, hour)
-                set(Calendar.MINUTE, minute)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-                
-                // If time has passed today, set for tomorrow
-                if (before(Calendar.getInstance())) {
-                    add(Calendar.DAY_OF_MONTH, 1)
-                }
+            val minute = minutePicker.value
+            val hour = if (is24hFormat) {
+                hourPicker.value
+            } else {
+                var h = hourPicker.value % 12
+                if (ampmToggle.isChecked) h += 12 // PM
+                h
             }
-            
-            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val alarmTimeStr = timeFormat.format(alarmCalendar!!.time)
-            
-            alarmTimeText.text = "⚡ ALARM: $alarmTimeStr"
-            alarmTimeText.setTextColor(Color.parseColor("#00FF88"))
-            
-            Toast.makeText(this, "⚡ ALARM ARMED: $alarmTimeStr", Toast.LENGTH_LONG).show()
+            applyAlarm(hour, minute)
             
         } catch (e: Exception) {
             Toast.makeText(this, "ERROR: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun applyAlarm(hour: Int, minute: Int) {
+        alarmCalendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
+        }
+
+    val timeFormat = if (is24hFormat) SimpleDateFormat("HH:mm", Locale.getDefault())
+        else SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val alarmTimeStr = timeFormat.format(alarmCalendar!!.time)
+
+        val friendly = friendlyInDuration(Calendar.getInstance(), alarmCalendar!!)
+        alarmTimeText.text = "⚡ ALARM: $alarmTimeStr  ($friendly)"
+        alarmTimeText.setTextColor(Color.parseColor("#00FF88"))
+        alarmTimeText.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+
+        Toast.makeText(this, "⚡ ALARM ARMED: $alarmTimeStr — $friendly", Toast.LENGTH_LONG).show()
+    }
+
+    private fun setAlarmAfter(minutes: Int) {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.MINUTE, minutes)
+        applyAlarm(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+    }
+
+    private fun friendlyInDuration(now: Calendar, target: Calendar): String {
+        var diffMs = target.timeInMillis - now.timeInMillis
+        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000 // safety wrap
+        val totalMinutes = (diffMs / 60000L).toInt()
+        val hours = totalMinutes / 60
+        val mins = totalMinutes % 60
+        return when {
+            hours > 0 && mins > 0 -> "in ${hours}h ${mins}m"
+            hours > 0 -> "in ${hours}h"
+            else -> "in ${mins}m"
         }
     }
     
