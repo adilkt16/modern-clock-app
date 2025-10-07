@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
@@ -42,6 +43,9 @@ class MainActivity : Activity() {
     private val notificationId = 1001
     private val channelId = "ALARM_CHANNEL"
     private val requestPostNotif = 2001
+    // Puzzle gating state
+    private var mathPuzzleSolved: Boolean = false
+    private var currentMathAnswer: Int = 0
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -228,12 +232,7 @@ class MainActivity : Activity() {
         // Start time updates
         startTimeUpdate()
         
-        // If launched from notification action (dismiss)
-        intent?.action?.let { action ->
-            if (action == "DISMISS_ALARM") {
-                dismissAlarm()
-            }
-        }
+        // Note: No direct dismiss via notification action; users must solve puzzle in-app
     }
     
     private fun maybeRequestNotificationPermission() {
@@ -383,16 +382,109 @@ class MainActivity : Activity() {
     }
     
     private fun showAlarmDialog() {
-        alarmDialog = AlertDialog.Builder(this)
-            .setTitle("⚡ ALARM ACTIVE!")
-            .setMessage("Wake up! Time to rise and shine!")
-            .setCancelable(false)
-            .setPositiveButton("DISMISS") { dialog, _ ->
-                dismissAlarm()
-                dialog.dismiss()
+        mathPuzzleSolved = false
+
+        // Generate easy mode puzzle with answer in [0..10]
+        val (puzzleTextStr, answer) = generateMathPuzzle()
+        currentMathAnswer = answer
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 40, 40, 30)
+            // Dark background to ensure contrast with white puzzle text
+            setBackgroundColor(Color.parseColor("#0A0E27"))
+        }
+
+        val title = TextView(this).apply {
+            text = "⚡ ALARM ACTIVE!"
+            textSize = 20f
+            setTextColor(Color.parseColor("#00D9FF"))
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+        }
+
+        val subtitle = TextView(this).apply {
+            text = "Solve this quick puzzle to dismiss"
+            textSize = 16f
+            setTextColor(Color.parseColor("#B0B8D4"))
+            gravity = Gravity.CENTER
+        }
+
+        val puzzleText = TextView(this).apply {
+            text = puzzleTextStr
+            textSize = 28f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, 20, 0, 10)
+        }
+
+        val input = EditText(this).apply {
+            hint = "?"
+            textSize = 22f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#6C5CE7"))
+            gravity = Gravity.CENTER
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
+        }
+
+        val checkBtn = Button(this).apply {
+            text = "CHECK"
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#6C5CE7"))
+        }
+
+        val feedback = TextView(this).apply {
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setPadding(0, 10, 0, 0)
+        }
+
+        // Dismiss button is created only after correct answer
+        var dismissBtn: Button? = null
+
+        checkBtn.setOnClickListener {
+            val user = input.text.toString().toIntOrNull()
+            if (user == currentMathAnswer) {
+                mathPuzzleSolved = true
+                feedback.text = "✅ Correct!"
+                feedback.setTextColor(Color.parseColor("#00FF88"))
+                input.isEnabled = false
+                checkBtn.isEnabled = false
+
+                if (dismissBtn == null) {
+                    dismissBtn = Button(this).apply {
+                        text = "DISMISS ALARM"
+                        setTextColor(Color.WHITE)
+                        setBackgroundColor(Color.parseColor("#00AA66"))
+                        setOnClickListener {
+                            dismissAlarm()
+                            alarmDialog?.dismiss()
+                        }
+                    }
+                    container.addView(dismissBtn)
+                }
+            } else {
+                feedback.text = "❌ Try again. Hint: answer is between 0 and 10"
+                feedback.setTextColor(Color.parseColor("#FF6B6B"))
+                input.text.clear()
             }
+        }
+
+        container.addView(title)
+        container.addView(subtitle)
+        container.addView(puzzleText)
+        container.addView(input)
+        container.addView(checkBtn)
+        container.addView(feedback)
+
+        alarmDialog = AlertDialog.Builder(this)
+            .setView(container)
+            .setCancelable(false)
             .create()
-        
+
+        // Make the dialog window background transparent so our container background is visible
+        alarmDialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         alarmDialog?.show()
     }
     
@@ -407,12 +499,7 @@ class MainActivity : Activity() {
         val openPending = PendingIntent.getActivity(
             this, 0, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        
-        val dismissIntent = Intent(this, MainActivity::class.java).apply { action = "DISMISS_ALARM" }
-        val dismissPending = PendingIntent.getActivity(
-            this, 1, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
+
         val builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⚡ CYBER ALARM")
@@ -423,13 +510,29 @@ class MainActivity : Activity() {
             .setOngoing(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(openPending)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPending)
             .setFullScreenIntent(openPending, true)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
             .setVibrate(longArrayOf(1000, 1000))
         
         val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mgr.notify(notificationId, builder.build())
+    }
+
+    // Generate an easy-mode math puzzle with answer in [0..10]
+    private fun generateMathPuzzle(): Pair<String, Int> {
+        val rand = Random()
+        return if (rand.nextBoolean()) {
+            // addition: a + b <= 10, with a,b in 0..10
+            val a = rand.nextInt(11) // 0..10
+            val bMax = 10 - a
+            val b = if (bMax > 0) rand.nextInt(bMax + 1) else 0
+            Pair("$a + $b = ?", a + b)
+        } else {
+            // subtraction: a - b in 0..10, with 0<=b<=a<=10
+            val a = rand.nextInt(11) // 0..10
+            val b = if (a > 0) rand.nextInt(a + 1) else 0
+            Pair("$a - $b = ?", a - b)
+        }
     }
     
     private fun clearAlarmNotification() {
