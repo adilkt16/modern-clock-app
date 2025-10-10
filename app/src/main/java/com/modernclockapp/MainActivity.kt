@@ -39,11 +39,19 @@ class MainActivity : Activity() {
     private lateinit var hourPicker: NumberPicker
     private lateinit var minutePicker: NumberPicker
     private lateinit var ampmToggle: ToggleButton
+    // Optional end time controls
+    private lateinit var endTimeSwitch: Switch
+    private lateinit var endHourPicker: NumberPicker
+    private lateinit var endMinutePicker: NumberPicker
+    private lateinit var endAmpmToggle: ToggleButton
+    private var isEndTimeEnabled: Boolean = false
     private var is24hFormat: Boolean = true
     private var isPm: Boolean = false
+    private var isEndPm: Boolean = false
     private val handler = Handler(Looper.getMainLooper())
     private var timeUpdateRunnable: Runnable? = null
     private var alarmCalendar: Calendar? = null
+    private var endTimeCalendar: Calendar? = null
     private var mediaPlayer: MediaPlayer? = null
     private var alarmDialog: AlertDialog? = null
     private var isAlarmRinging = false
@@ -205,6 +213,12 @@ class MainActivity : Activity() {
                 // convert 12h selection to 24h
                 if (isPm && hourPicker.value < 12) hourPicker.value += 12
                 if (!isPm && hourPicker.value == 12) hourPicker.value = 0
+                // End-time 24h handling
+                endHourPicker.minValue = 0
+                endHourPicker.maxValue = 23
+                endAmpmToggle.visibility = View.GONE
+                if (isEndPm && endHourPicker.value < 12) endHourPicker.value += 12
+                if (!isEndPm && endHourPicker.value == 12) endHourPicker.value = 0
             } else {
                 ampmToggle.visibility = View.VISIBLE
                 // convert 24h to 12h display
@@ -218,10 +232,84 @@ class MainActivity : Activity() {
                     h24 > 12 -> h24 - 12
                     else -> h24
                 }
+                // End-time 12h handling
+                endAmpmToggle.visibility = View.VISIBLE
+                val eh24 = endHourPicker.value
+                isEndPm = eh24 >= 12
+                endAmpmToggle.isChecked = isEndPm
+                endHourPicker.minValue = 1
+                endHourPicker.maxValue = 12
+                endHourPicker.value = when {
+                    eh24 == 0 -> 12
+                    eh24 > 12 -> eh24 - 12
+                    else -> eh24
+                }
             }
         }
         formatRow.addView(formatLabel)
         formatRow.addView(formatSwitch)
+
+        // End time (optional) UI
+        val endRowContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 16, 0, 0)
+        }
+        val endHeaderRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val endLabel = TextView(this).apply {
+            text = "END TIME (OPTIONAL)"
+            textSize = 14f
+            setTextColor(Color.parseColor("#B0B8D4"))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        endTimeSwitch = Switch(this).apply { isChecked = false }
+        endTimeSwitch.setOnCheckedChangeListener { _, checked ->
+            isEndTimeEnabled = checked
+            setEndTimeControlsEnabled(checked)
+        }
+        endHeaderRow.addView(endLabel)
+        endHeaderRow.addView(endTimeSwitch)
+
+        val endTimeRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        endHourPicker = NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 23
+            value = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            setFormatter { String.format("%02d", it) }
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 12, 0) }
+        }
+        val endColon = TextView(this).apply {
+            text = ":"
+            textSize = 24f
+            setTextColor(Color.WHITE)
+            setPadding(4, 0, 4, 0)
+        }
+        endMinutePicker = NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 59
+            value = Calendar.getInstance().get(Calendar.MINUTE)
+            setFormatter { String.format("%02d", it) }
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 12, 0) }
+        }
+        endAmpmToggle = ToggleButton(this).apply {
+            textOn = "PM"
+            textOff = "AM"
+            text = textOff
+            isChecked = false
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
+        }
+        endTimeRow.addView(endHourPicker)
+        endTimeRow.addView(endColon)
+        endTimeRow.addView(endMinutePicker)
+        endTimeRow.addView(endAmpmToggle)
+
+        endRowContainer.addView(endHeaderRow)
+        endRowContainer.addView(endTimeRow)
 
         
         // Buttons container
@@ -271,6 +359,7 @@ class MainActivity : Activity() {
         buttonContainer.addView(clearAlarmButton)
         
     alarmCard.addView(timeRow)
+    alarmCard.addView(endRowContainer)
     alarmCard.addView(formatRow)
     alarmCard.addView(buttonContainer)
         
@@ -312,6 +401,21 @@ class MainActivity : Activity() {
         startTimeUpdate()
         
         // Note: No direct dismiss via notification action; users must solve puzzle in-app
+
+        // Initialize end time controls to disabled by default and reflect 24h/12h visibility
+        setEndTimeControlsEnabled(false)
+        endAmpmToggle.visibility = if (is24hFormat) View.GONE else View.VISIBLE
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // If alarm is currently ringing and the dialog isn't visible, show it again
+        if (isAlarmRinging) {
+            val showing = alarmDialog?.isShowing == true
+            if (!showing) {
+                showAlarmDialog()
+            }
+        }
     }
     
     private fun maybeRequestNotificationPermission() {
@@ -347,6 +451,16 @@ class MainActivity : Activity() {
         }
         handler.post(timeUpdateRunnable!!)
     }
+
+    private fun setEndTimeControlsEnabled(enabled: Boolean) {
+        val alpha = if (enabled) 1.0f else 0.4f
+        endHourPicker.isEnabled = enabled
+        endMinutePicker.isEnabled = enabled
+        endAmpmToggle.isEnabled = enabled
+        endHourPicker.alpha = alpha
+        endMinutePicker.alpha = alpha
+        endAmpmToggle.alpha = alpha
+    }
     
     private fun updateTime() {
         val now = Calendar.getInstance()
@@ -361,6 +475,15 @@ class MainActivity : Activity() {
         alarmCalendar?.let { alarm ->
             if (now.timeInMillis >= alarm.timeInMillis && !isAlarmRinging) {
                 triggerAlarm()
+            }
+        }
+
+        // Auto-stop when end time reached
+        if (isAlarmRinging && endTimeCalendar != null) {
+            endTimeCalendar?.let { endCal ->
+                if (now.timeInMillis >= endCal.timeInMillis) {
+                    autoStopAlarm()
+                }
             }
         }
     }
@@ -391,16 +514,39 @@ class MainActivity : Activity() {
             if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
         }
 
-    val timeFormat = if (is24hFormat) SimpleDateFormat("HH:mm", Locale.getDefault())
+        // Compute end time if enabled
+        endTimeCalendar = if (isEndTimeEnabled) {
+            val endH = if (is24hFormat) {
+                endHourPicker.value
+            } else {
+                var h = endHourPicker.value % 12
+                if (endAmpmToggle.isChecked) h += 12
+                h
+            }
+            Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, endH)
+                set(Calendar.MINUTE, endMinutePicker.value)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                val now = Calendar.getInstance()
+                if (before(now)) add(Calendar.DAY_OF_MONTH, 1)
+                alarmCalendar?.let { startCal ->
+                    if (timeInMillis <= startCal.timeInMillis) add(Calendar.DAY_OF_MONTH, 1)
+                }
+            }
+        } else null
+
+        val timeFormat = if (is24hFormat) SimpleDateFormat("HH:mm", Locale.getDefault())
         else SimpleDateFormat("hh:mm a", Locale.getDefault())
         val alarmTimeStr = timeFormat.format(alarmCalendar!!.time)
 
         val friendly = friendlyInDuration(Calendar.getInstance(), alarmCalendar!!)
-        alarmTimeText.text = "⚡ ALARM: $alarmTimeStr  ($friendly)"
+        val endSuffix = endTimeCalendar?.let { "  → auto-stop at ${timeFormat.format(it.time)}" } ?: ""
+        alarmTimeText.text = "⚡ ALARM: $alarmTimeStr  ($friendly)$endSuffix"
         alarmTimeText.setTextColor(Color.parseColor("#00FF88"))
         alarmTimeText.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
 
-        Toast.makeText(this, "⚡ ALARM ARMED: $alarmTimeStr — $friendly", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "⚡ ALARM ARMED: $alarmTimeStr — $friendly$endSuffix", Toast.LENGTH_LONG).show()
     }
 
     private fun setAlarmAfter(minutes: Int) {
@@ -424,6 +570,7 @@ class MainActivity : Activity() {
     
     private fun clearAlarm() {
         alarmCalendar = null
+        endTimeCalendar = null
         alarmTimeText.text = "NO ALARM SET"
         alarmTimeText.setTextColor(Color.parseColor("#B0B8D4"))
         stopAlarmSound()
@@ -598,6 +745,21 @@ class MainActivity : Activity() {
         stopAlarmSound()
         clearAlarm()
         Toast.makeText(this, "✅ DISMISSED", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun autoStopAlarm() {
+        // Stop ringing and clear state
+        stopAlarmSound()
+        clearAlarmNotification()
+        alarmDialog?.dismiss()
+        isAlarmRinging = false
+        val fmt = if (is24hFormat) SimpleDateFormat("HH:mm", Locale.getDefault()) else SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val endStr = endTimeCalendar?.let { fmt.format(it.time) } ?: "END"
+        alarmTimeText.text = "🔕 AUTO-STOPPED AT $endStr"
+        alarmTimeText.setTextColor(Color.parseColor("#B0B8D4"))
+        alarmCalendar = null
+        endTimeCalendar = null
+        Toast.makeText(this, "⏹️ Alarm auto-stopped", Toast.LENGTH_SHORT).show()
     }
     
     private fun showAlarmNotification() {
