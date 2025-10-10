@@ -29,6 +29,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : Activity() {
+    companion object {
+        const val EXTRA_SHOW_PUZZLE = "com.modernclockapp.EXTRA_SHOW_PUZZLE"
+    }
     
     private lateinit var timeDisplay: TextView
     private lateinit var dateDisplay: TextView
@@ -397,14 +400,18 @@ class MainActivity : Activity() {
         // Request notification permission if needed (Android 13+)
         maybeRequestNotificationPermission()
         
-        // Start time updates
-        startTimeUpdate()
+    // Start time updates and run once to avoid delay
+    startTimeUpdate()
+    updateTime()
         
         // Note: No direct dismiss via notification action; users must solve puzzle in-app
 
         // Initialize end time controls to disabled by default and reflect 24h/12h visibility
         setEndTimeControlsEnabled(false)
         endAmpmToggle.visibility = if (is24hFormat) View.GONE else View.VISIBLE
+
+        // If launched with intent to show puzzle, handle it now
+        handleIntentForPuzzle(intent)
     }
 
     override fun onResume() {
@@ -413,6 +420,23 @@ class MainActivity : Activity() {
         if (isAlarmRinging) {
             val showing = alarmDialog?.isShowing == true
             if (!showing) {
+                showAlarmDialog()
+            }
+        } else {
+            // Ensure we evaluate due alarms immediately on resume
+            updateTime()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null) handleIntentForPuzzle(intent)
+    }
+
+    private fun handleIntentForPuzzle(intent: Intent) {
+        val force = intent.getBooleanExtra(EXTRA_SHOW_PUZZLE, false)
+        if ((isAlarmRinging || force)) {
+            if (alarmDialog?.isShowing != true) {
                 showAlarmDialog()
             }
         }
@@ -763,7 +787,10 @@ class MainActivity : Activity() {
     }
     
     private fun showAlarmNotification() {
-        val openIntent = Intent(this, MainActivity::class.java)
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            putExtra(EXTRA_SHOW_PUZZLE, true)
+            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
         val openPending = PendingIntent.getActivity(
             this, 0, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
