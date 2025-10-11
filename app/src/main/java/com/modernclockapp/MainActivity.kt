@@ -83,9 +83,16 @@ class MainActivity : Activity() {
         alarmStorage = AlarmStorage.getInstance(this)
         alarmScheduler = AlarmScheduler.getInstance(this)
         
-        // Main container with gradient background
+        // Main container with modern gradient background
         val mainLayout = FrameLayout(this).apply {
-            setBackgroundResource(R.drawable.bg_futuristic_gradient)
+            // Create a subtle gradient from dark blue to lighter blue
+            background = android.graphics.drawable.GradientDrawable().apply {
+                orientation = android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM
+                colors = intArrayOf(
+                    Color.parseColor("#1A237E"), // Deep indigo
+                    Color.parseColor("#3F51B5")  // Material indigo
+                )
+            }
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
@@ -99,29 +106,28 @@ class MainActivity : Activity() {
             setPadding(32, 60, 32, 60)
         }
         
-        // AltRise Logo and Title
+        // AltRise Logo and Title in horizontal layout
         val logoContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 40)
         }
         
         val logo = ImageView(this).apply {
             setImageResource(R.drawable.altrise)
-            layoutParams = LinearLayout.LayoutParams(200, 200).apply {
-                gravity = Gravity.CENTER
-                setMargins(0, 0, 0, 20)
+            layoutParams = LinearLayout.LayoutParams(80, 80).apply {
+                setMargins(0, 0, 20, 0)
             }
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
         
         val title = TextView(this).apply {
             text = "AltRise"
-            textSize = 36f
-            setTextColor(Color.parseColor("#00D9FF"))
-            textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+            textSize = 32f
+            setTextColor(Color.parseColor("#FFFFFF"))
+            gravity = Gravity.CENTER_VERTICAL
             typeface = Typeface.DEFAULT_BOLD
-            setShadowLayer(20f, 0f, 0f, Color.parseColor("#00D9FF"))
+            setShadowLayer(8f, 0f, 2f, Color.parseColor("#4CAF50"))
         }
         
         logoContainer.addView(logo)
@@ -140,19 +146,19 @@ class MainActivity : Activity() {
             }
         }
         
-        // Time display with neon effect
+        // Time display with clean modern styling
         timeDisplay = TextView(this).apply {
             textSize = 56f
             setTextColor(Color.parseColor("#FFFFFF"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            setShadowLayer(30f, 0f, 0f, Color.parseColor("#6C5CE7"))
+            setShadowLayer(8f, 0f, 2f, Color.parseColor("#3F51B5"))
         }
         
         // Date display
         dateDisplay = TextView(this).apply {
             textSize = 18f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            setTextColor(Color.parseColor("#E8EAF6"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             setPadding(0, 20, 0, 0)
             letterSpacing = 0.1f
@@ -165,7 +171,7 @@ class MainActivity : Activity() {
         val alarmTitle = TextView(this).apply {
             text = "⏰ ALARM CONTROL"
             textSize = 20f
-            setTextColor(Color.parseColor("#00D9FF"))
+            setTextColor(Color.parseColor("#FFFFFF"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             typeface = Typeface.DEFAULT_BOLD
             setPadding(0, 40, 0, 30)
@@ -217,11 +223,10 @@ class MainActivity : Activity() {
         ampmToggle = ToggleButton(this).apply {
             textOn = "PM"
             textOff = "AM"
-            text = textOff
-            isChecked = false
-            setTextColor(Color.WHITE)
-            setBackgroundResource(R.drawable.bg_outline_button)
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
+            textSize = 12f
+            setTextColor(Color.parseColor("#3F51B5"))
+            setBackgroundResource(R.drawable.bg_secondary_button)
+            layoutParams = LinearLayout.LayoutParams(80, 80)
         }
         timeRow.addView(hourPicker)
         timeRow.addView(colon)
@@ -239,20 +244,20 @@ class MainActivity : Activity() {
         val hourLabel = TextView(this).apply {
             text = "Hour"
             textSize = 12f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            setTextColor(Color.parseColor("#E8EAF6"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 12, 0) }
         }
         val spacer = TextView(this).apply { text = "  " }
         val minuteLabel = TextView(this).apply {
             text = "Minute"
             textSize = 12f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            setTextColor(Color.parseColor("#E8EAF6"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 12, 0) }
         }
         val ampmLabel = TextView(this).apply {
             text = "AM/PM"
             textSize = 12f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            setTextColor(Color.parseColor("#E8EAF6"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
         }
         labelsRow.addView(hourLabel)
@@ -272,7 +277,7 @@ class MainActivity : Activity() {
         val formatLabel = TextView(this).apply {
             text = "24H FORMAT"
             textSize = 14f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            setTextColor(Color.parseColor("#E8EAF6"))
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         val formatSwitch = Switch(this).apply { isChecked = true }
@@ -384,8 +389,8 @@ class MainActivity : Activity() {
             textOff = "AM"
             text = textOff
             isChecked = false
-            setTextColor(Color.WHITE)
-            setBackgroundResource(R.drawable.bg_outline_button)
+            setTextColor(Color.parseColor("#3F51B5"))
+            setBackgroundResource(R.drawable.bg_secondary_button)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
         }
     endTimeRow.addView(endHourPicker)
@@ -411,13 +416,13 @@ class MainActivity : Activity() {
             }
         }
         
-        // Set alarm button with neon gradient
+        // Set alarm button with modern gradient
         setAlarmButton = Button(this).apply {
             text = "SET ALARM"
             textSize = 16f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
-            setBackgroundResource(R.drawable.bg_neon_button)
+            setBackgroundResource(R.drawable.bg_primary_button)
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 120,
@@ -427,13 +432,13 @@ class MainActivity : Activity() {
             }
         }
         
-        // Clear alarm button with outline style
+        // Clear alarm button with modern outline style
         clearAlarmButton = Button(this).apply {
             text = "CLEAR"
             textSize = 16f
-            setTextColor(Color.parseColor("#00D9FF"))
+            setTextColor(Color.parseColor("#3F51B5"))
             typeface = Typeface.DEFAULT_BOLD
-            setBackgroundResource(R.drawable.bg_outline_button)
+            setBackgroundResource(R.drawable.bg_secondary_button)
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 120,
@@ -592,7 +597,7 @@ class MainActivity : Activity() {
         endAmpmToggle.alpha = alpha
     }
 
-    // Improve NumberPicker readability: white text, bold monospace, neon divider
+    // Modern NumberPicker styling: clean white text, professional dividers
     private fun styleNumberPicker(np: NumberPicker) {
         np.setWrapSelectorWheel(true)
         np.descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
@@ -619,11 +624,11 @@ class MainActivity : Activity() {
             }
         }
 
-        // Set selection divider color and height
+        // Set selection divider color and height - modern indigo accent
         try {
             val dividerField = NumberPicker::class.java.getDeclaredField("mSelectionDivider")
             dividerField.isAccessible = true
-            dividerField.set(np, ColorDrawable(Color.parseColor("#00D9FF")))
+            dividerField.set(np, ColorDrawable(Color.parseColor("#3F51B5")))
         } catch (_: Exception) {
         }
         try {
@@ -937,14 +942,14 @@ class MainActivity : Activity() {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 40, 40, 30)
-            // Dark background to ensure contrast with white puzzle text
-            setBackgroundColor(Color.parseColor("#0A0E27"))
+            // Modern background matching app theme
+            setBackgroundColor(Color.parseColor("#1A237E"))
         }
 
         val title = TextView(this).apply {
             text = "⚡ ALARM ACTIVE!"
             textSize = 20f
-            setTextColor(Color.parseColor("#00D9FF"))
+            setTextColor(Color.parseColor("#3F51B5"))
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
         }
@@ -952,7 +957,7 @@ class MainActivity : Activity() {
         val subtitle = TextView(this).apply {
             text = "Solve this quick puzzle to dismiss"
             textSize = 16f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            setTextColor(Color.parseColor("#E8EAF6"))
             gravity = Gravity.CENTER
         }
 
@@ -969,7 +974,7 @@ class MainActivity : Activity() {
             hint = "?"
             textSize = 22f
             setTextColor(Color.WHITE)
-            setHintTextColor(Color.parseColor("#6C5CE7"))
+            setHintTextColor(Color.parseColor("#9FA8DA"))
             gravity = Gravity.CENTER
             inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
         }
@@ -977,7 +982,7 @@ class MainActivity : Activity() {
         val checkBtn = Button(this).apply {
             text = "CHECK"
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#6C5CE7"))
+            setBackgroundColor(Color.parseColor("#3F51B5"))
         }
 
         val feedback = TextView(this).apply {
