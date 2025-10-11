@@ -225,7 +225,7 @@ class AlarmDismissActivity : Activity() {
                 dismissBtn.isEnabled = true
                 dismissBtn.alpha = 1.0f
             } else {
-                feedback.text = "❌ Incorrect. Try again!\nHint: Answer is between 0 and 10"
+                feedback.text = "❌ Incorrect. Try again!\nHint: Answer is between 0 and 50"
                 feedback.setTextColor(Color.parseColor("#FF6B6B"))
                 input.text.clear()
             }
@@ -252,9 +252,9 @@ class AlarmDismissActivity : Activity() {
     private fun generateMathPuzzle(): Pair<String, Int> {
         val rand = Random()
         return if (rand.nextBoolean()) {
-            // Addition: a + b <= 10
+            // Addition: a + b <= 50
             val a = rand.nextInt(11)
-            val bMax = 10 - a
+            val bMax = 50 - a
             val b = if (bMax > 0) rand.nextInt(bMax + 1) else 0
             Pair("$a + $b = ?", a + b)
         } else {

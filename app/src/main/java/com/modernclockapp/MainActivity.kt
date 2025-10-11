@@ -224,9 +224,21 @@ class MainActivity : Activity() {
             textOn = "PM"
             textOff = "AM"
             textSize = 12f
-            setTextColor(Color.parseColor("#3F51B5"))
-            setBackgroundResource(R.drawable.bg_secondary_button)
+            typeface = Typeface.DEFAULT_BOLD
+            setBackgroundResource(R.drawable.bg_toggle_button)
             layoutParams = LinearLayout.LayoutParams(80, 80)
+            
+            // Set text color based on state
+            setOnCheckedChangeListener { button, isChecked ->
+                if (isChecked) {
+                    button.setTextColor(Color.WHITE) // White text on blue background
+                } else {
+                    button.setTextColor(Color.parseColor("#3F51B5")) // Blue text on white background
+                }
+                isPm = isChecked
+            }
+            // Initial state
+            setTextColor(Color.parseColor("#3F51B5"))
         }
         timeRow.addView(hourPicker)
         timeRow.addView(colon)
@@ -303,6 +315,8 @@ class MainActivity : Activity() {
                 val h24 = hourPicker.value
                 isPm = h24 >= 12
                 ampmToggle.isChecked = isPm
+                // Update text color based on checked state
+                ampmToggle.setTextColor(if (isPm) Color.WHITE else Color.parseColor("#3F51B5"))
                 hourPicker.minValue = 1
                 hourPicker.maxValue = 12
                 hourPicker.value = when {
@@ -315,6 +329,8 @@ class MainActivity : Activity() {
                 val eh24 = endHourPicker.value
                 isEndPm = eh24 >= 12
                 endAmpmToggle.isChecked = isEndPm
+                // Update text color based on checked state
+                endAmpmToggle.setTextColor(if (isEndPm) Color.WHITE else Color.parseColor("#3F51B5"))
                 endHourPicker.minValue = 1
                 endHourPicker.maxValue = 12
                 endHourPicker.value = when {
@@ -389,9 +405,21 @@ class MainActivity : Activity() {
             textOff = "AM"
             text = textOff
             isChecked = false
-            setTextColor(Color.parseColor("#3F51B5"))
-            setBackgroundResource(R.drawable.bg_secondary_button)
+            typeface = Typeface.DEFAULT_BOLD
+            setBackgroundResource(R.drawable.bg_toggle_button)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
+            
+            // Set text color based on state
+            setOnCheckedChangeListener { button, isChecked ->
+                if (isChecked) {
+                    button.setTextColor(Color.WHITE) // White text on blue background
+                } else {
+                    button.setTextColor(Color.parseColor("#3F51B5")) // Blue text on white background
+                }
+                isEndPm = isChecked
+            }
+            // Initial state - unchecked (AM)
+            setTextColor(Color.parseColor("#3F51B5"))
         }
     endTimeRow.addView(endHourPicker)
         endTimeRow.addView(endColon)
