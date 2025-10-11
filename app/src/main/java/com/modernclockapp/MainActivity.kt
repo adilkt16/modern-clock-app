@@ -26,6 +26,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.modernclockapp.alarm.AlarmScheduler
+import com.modernclockapp.alarm.AlarmState
+import com.modernclockapp.alarm.AlarmDismissActivity
 import com.modernclockapp.models.Alarm
 import com.modernclockapp.storage.AlarmStorage
 import java.text.SimpleDateFormat
@@ -424,8 +426,8 @@ class MainActivity : Activity() {
         setEndTimeControlsEnabled(false)
         endAmpmToggle.visibility = if (is24hFormat) View.GONE else View.VISIBLE
 
-        // If launched with intent to show puzzle, handle it now
-        handleIntentForPuzzle(intent)
+        // If launched while an alarm is active (manual open), route to full-screen puzzle
+        routeToPuzzleIfNeeded(intent)
     }
 
     override fun onResume() {
@@ -444,15 +446,32 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent != null) handleIntentForPuzzle(intent)
+        if (intent != null) routeToPuzzleIfNeeded(intent)
     }
 
-    private fun handleIntentForPuzzle(intent: Intent) {
+    private fun routeToPuzzleIfNeeded(intent: Intent) {
+        // Prefer the dedicated full-screen activity to avoid duplicate puzzle UIs.
+        val activeId = AlarmState.getActiveAlarmId(this)
+
+        // If explicitly forced from a notification intent, also route to full-screen when possible
         val force = intent.getBooleanExtra(EXTRA_SHOW_PUZZLE, false)
-        if ((isAlarmRinging || force)) {
-            if (alarmDialog?.isShowing != true) {
-                showAlarmDialog()
+
+        if (activeId != null) {
+            // Close any inline dialog if somehow visible
+            if (alarmDialog?.isShowing == true) alarmDialog?.dismiss()
+
+            val fs = Intent(this, AlarmDismissActivity::class.java).apply {
+                putExtra(com.modernclockapp.alarm.AlarmScheduler.EXTRA_ALARM_ID, activeId)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
+            startActivity(fs)
+            return
+        }
+
+        // Fallbacks only if we don't know an active alarm id
+        if (force || isAlarmRinging) {
+            // If we don't have an alarm id (legacy/local path), show inline dialog as last resort
+            if (alarmDialog?.isShowing != true) showAlarmDialog()
         }
     }
     

@@ -82,6 +82,9 @@ class AlarmNotificationService : Service() {
                     setupEndTimeAutoStop(endTimeMillis!!)
                 }
                 
+                // Mark alarm active so launcher can route to puzzle
+                AlarmState.setActiveAlarmId(this, alarmId)
+
                 // Start foreground service with notification
                 startForeground(NOTIFICATION_ID, createNotification())
                 
@@ -117,6 +120,9 @@ class AlarmNotificationService : Service() {
                     stopVibration()
                     Log.d(TAG, "Sound and vibration stopped")
                     
+                    // Clear active alarm state
+                    AlarmState.clearActiveAlarm(this@AlarmNotificationService)
+
                     // Broadcast to close the AlarmDismissActivity
                     val broadcastIntent = Intent(ACTION_AUTO_STOP)
                     sendBroadcast(broadcastIntent)
@@ -262,6 +268,8 @@ class AlarmNotificationService : Service() {
         endTimeTimer?.cancel()
         stopAlarmSound()
         stopVibration()
+        // Clear active alarm state on manual dismiss or stop
+        AlarmState.clearActiveAlarm(this)
         stopForeground(true)
         stopSelf()
     }
@@ -274,5 +282,7 @@ class AlarmNotificationService : Service() {
         endTimeTimer?.cancel()
         stopAlarmSound()
         stopVibration()
+        // Ensure state cleared if service dies unexpectedly
+        AlarmState.clearActiveAlarm(this)
     }
 }
