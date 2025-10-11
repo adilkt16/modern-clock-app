@@ -1,0 +1,14 @@
+{
+  "assetType": "screenshots",
+  "description": "Screenshots for Play Store (phone and tablet)",
+  "instructions": [
+    "Take a screenshot of the main clock screen on a phone.",
+    "Take a screenshot of the alarm setup screen on a phone.",
+    "Take a screenshot of the clock screen on a tablet (if supported).",
+    "Take a screenshot of the settings screen.",
+    "Ensure all screenshots are clear, show real data, and have no debug/test artifacts."
+  ],
+  "recommendedCount": 5,
+  "formats": ["PNG", "JPG"],
+  "sizes": ["phone: 1080x1920", "tablet: 2560x1600"]
+}
