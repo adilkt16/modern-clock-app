@@ -228,8 +228,8 @@ class AlarmNotificationService : Service() {
         )
         
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("⚡ CYBER ALARM")
+            .setSmallIcon(R.drawable.altrise)
+            .setContentTitle("⚡ AltRise Alarm")
             .setContentText("Alarm is ringing! Tap to dismiss.")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)

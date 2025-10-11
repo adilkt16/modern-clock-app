@@ -99,16 +99,33 @@ class MainActivity : Activity() {
             setPadding(32, 60, 32, 60)
         }
         
-        // Futuristic Title with neon glow
+        // AltRise Logo and Title
+        val logoContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 40)
+        }
+        
+        val logo = ImageView(this).apply {
+            setImageResource(R.drawable.altrise)
+            layoutParams = LinearLayout.LayoutParams(200, 200).apply {
+                gravity = Gravity.CENTER
+                setMargins(0, 0, 0, 20)
+            }
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+        
         val title = TextView(this).apply {
-            text = "⚡ CYBER CLOCK"
+            text = "AltRise"
             textSize = 36f
             setTextColor(Color.parseColor("#00D9FF"))
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             typeface = Typeface.DEFAULT_BOLD
-            setPadding(0, 0, 0, 40)
             setShadowLayer(20f, 0f, 0f, Color.parseColor("#00D9FF"))
         }
+        
+        logoContainer.addView(logo)
+        logoContainer.addView(title)
         
         // Glass card for clock display
         val clockCard = LinearLayout(this).apply {
@@ -447,7 +464,7 @@ class MainActivity : Activity() {
         }
         
         // Add all views
-        layout.addView(title)
+        layout.addView(logoContainer)
         layout.addView(clockCard)
         layout.addView(alarmTitle)
         layout.addView(alarmCard)
@@ -673,7 +690,7 @@ class MainActivity : Activity() {
         }
         
         // Reset to normal text size for alarm countdown
-        timeDisplay.textSize = 56f
+        timeDisplay.textSize = 36f
         
         val now = Calendar.getInstance()
         val alarmTime = nextAlarm.getTriggerTimeMillis()
@@ -1047,8 +1064,8 @@ class MainActivity : Activity() {
         )
 
         val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("⚡ CYBER ALARM")
+            .setSmallIcon(R.drawable.altrise)
+            .setContentTitle("⚡ AltRise Alarm")
             .setContentText("Alarm is ringing! Tap to open.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)

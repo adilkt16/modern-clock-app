@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Modern Clock</string>
+    <string name="app_name">AltRise</string>
     <string name="clock">Clock</string>
     <string name="alarm">Alarm</string>
     <string name="timer">Timer</string>
