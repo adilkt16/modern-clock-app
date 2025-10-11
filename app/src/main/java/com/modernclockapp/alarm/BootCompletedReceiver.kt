@@ -3,7 +3,7 @@ package com.modernclockapp.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+// import android.util.Log (removed for release)
 
 /**
  * BroadcastReceiver that restores alarms after device reboot.
@@ -17,12 +17,12 @@ class BootCompletedReceiver : BroadcastReceiver() {
     
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            Log.d(TAG, "Device booted, restoring alarms")
+            // Log.d(TAG, "Device booted, restoring alarms") // removed for release
             
             val scheduler = AlarmScheduler.getInstance(context)
             scheduler.rescheduleAllAlarms()
             
-            Log.d(TAG, "Alarms restored successfully")
+            // Log.d(TAG, "Alarms restored successfully") // removed for release
         }
     }
 }

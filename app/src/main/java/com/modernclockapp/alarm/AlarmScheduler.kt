@@ -5,7 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
+// import android.util.Log (removed for release)
 import com.modernclockapp.models.Alarm
 import com.modernclockapp.storage.AlarmStorage
 
@@ -38,7 +38,7 @@ class AlarmScheduler(private val context: Context) {
      */
     fun scheduleAlarm(alarm: Alarm) {
         if (!alarm.isEnabled) {
-            Log.d(TAG, "Alarm ${alarm.id} is disabled, not scheduling")
+            // Log.d(TAG, "Alarm ${alarm.id} is disabled, not scheduling") // removed for release
             return
         }
         
@@ -61,9 +61,9 @@ class AlarmScheduler(private val context: Context) {
                 )
             }
             
-            Log.d(TAG, "Alarm ${alarm.id} scheduled for ${java.util.Date(triggerTime)}")
+            // Log.d(TAG, "Alarm ${alarm.id} scheduled for ${java.util.Date(triggerTime)}") // removed for release
         } catch (e: SecurityException) {
-            Log.e(TAG, "Permission denied to schedule exact alarm", e)
+            // Log.e(TAG, "Permission denied to schedule exact alarm", e) // removed for release
             // Fallback to inexact alarm
             alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
@@ -80,7 +80,7 @@ class AlarmScheduler(private val context: Context) {
         val pendingIntent = createPendingIntent(alarmId)
         alarmManager.cancel(pendingIntent)
         pendingIntent.cancel()
-        Log.d(TAG, "Alarm $alarmId cancelled")
+    // Log.d(TAG, "Alarm $alarmId cancelled") // removed for release
     }
     
     /**
@@ -91,7 +91,7 @@ class AlarmScheduler(private val context: Context) {
         alarms.forEach { alarm ->
             cancelAlarm(alarm.id)
         }
-        Log.d(TAG, "All alarms cancelled")
+    // Log.d(TAG, "All alarms cancelled") // removed for release
     }
     
     /**
@@ -99,7 +99,7 @@ class AlarmScheduler(private val context: Context) {
      */
     fun rescheduleAllAlarms() {
         val alarms = storage.getEnabledAlarms()
-        Log.d(TAG, "Rescheduling ${alarms.size} enabled alarms")
+    // Log.d(TAG, "Rescheduling ${alarms.size} enabled alarms") // removed for release
         
         alarms.forEach { alarm ->
             scheduleAlarm(alarm)
