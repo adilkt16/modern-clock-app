@@ -25,6 +25,9 @@ import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.modernclockapp.alarm.AlarmScheduler
+import com.modernclockapp.models.Alarm
+import com.modernclockapp.storage.AlarmStorage
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,6 +35,11 @@ class MainActivity : Activity() {
     companion object {
         const val EXTRA_SHOW_PUZZLE = "com.modernclockapp.EXTRA_SHOW_PUZZLE"
     }
+    
+    // Storage and scheduler for persistent alarms
+    private lateinit var alarmStorage: AlarmStorage
+    private lateinit var alarmScheduler: AlarmScheduler
+    private var currentAlarmId: Int? = null
     
     private lateinit var timeDisplay: TextView
     private lateinit var dateDisplay: TextView
@@ -67,6 +75,10 @@ class MainActivity : Activity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize storage and scheduler
+        alarmStorage = AlarmStorage.getInstance(this)
+        alarmScheduler = AlarmScheduler.getInstance(this)
         
         // Main container with gradient background
         val mainLayout = FrameLayout(this).apply {
@@ -400,6 +412,9 @@ class MainActivity : Activity() {
         // Request notification permission if needed (Android 13+)
         maybeRequestNotificationPermission()
         
+        // Load any existing alarms from storage
+        loadExistingAlarm()
+        
     // Start time updates and run once to avoid delay
     startTimeUpdate()
     updateTime()
@@ -530,6 +545,35 @@ class MainActivity : Activity() {
     }
 
     private fun applyAlarm(hour: Int, minute: Int) {
+        // Create alarm object
+        val alarmId = currentAlarmId ?: alarmStorage.getNextAlarmId()
+        
+        val alarm = Alarm(
+            id = alarmId,
+            hourOfDay = hour,
+            minute = minute,
+            isEnabled = true,
+            label = "",
+            hasEndTime = isEndTimeEnabled,
+            endHourOfDay = if (isEndTimeEnabled) {
+                if (is24hFormat) endHourPicker.value
+                else {
+                    var h = endHourPicker.value % 12
+                    if (endAmpmToggle.isChecked) h += 12
+                    h
+                }
+            } else null,
+            endMinute = if (isEndTimeEnabled) endMinutePicker.value else null
+        )
+        
+        // Save to storage
+        alarmStorage.saveAlarm(alarm)
+        currentAlarmId = alarmId
+        
+        // Schedule with AlarmManager
+        alarmScheduler.scheduleAlarm(alarm)
+        
+        // Update legacy alarm calendar for in-app checking
         alarmCalendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -539,17 +583,10 @@ class MainActivity : Activity() {
         }
 
         // Compute end time if enabled
-        endTimeCalendar = if (isEndTimeEnabled) {
-            val endH = if (is24hFormat) {
-                endHourPicker.value
-            } else {
-                var h = endHourPicker.value % 12
-                if (endAmpmToggle.isChecked) h += 12
-                h
-            }
+        endTimeCalendar = if (isEndTimeEnabled && alarm.endHourOfDay != null && alarm.endMinute != null) {
             Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, endH)
-                set(Calendar.MINUTE, endMinutePicker.value)
+                set(Calendar.HOUR_OF_DAY, alarm.endHourOfDay)
+                set(Calendar.MINUTE, alarm.endMinute)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
                 val now = Calendar.getInstance()
@@ -570,7 +607,7 @@ class MainActivity : Activity() {
         alarmTimeText.setTextColor(Color.parseColor("#00FF88"))
         alarmTimeText.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
 
-        Toast.makeText(this, "⚡ ALARM ARMED: $alarmTimeStr — $friendly$endSuffix", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "⚡ ALARM SAVED & SCHEDULED: $alarmTimeStr — $friendly$endSuffix", Toast.LENGTH_LONG).show()
     }
 
     private fun setAlarmAfter(minutes: Int) {
@@ -593,6 +630,13 @@ class MainActivity : Activity() {
     }
     
     private fun clearAlarm() {
+        // Cancel scheduled alarm
+        currentAlarmId?.let { id ->
+            alarmScheduler.cancelAlarm(id)
+            alarmStorage.deleteAlarm(id)
+        }
+        
+        currentAlarmId = null
         alarmCalendar = null
         endTimeCalendar = null
         alarmTimeText.text = "NO ALARM SET"
@@ -833,6 +877,52 @@ class MainActivity : Activity() {
     private fun clearAlarmNotification() {
         val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mgr.cancel(notificationId)
+    }
+    
+    /**
+     * Load existing alarm from storage on app start
+     */
+    private fun loadExistingAlarm() {
+        val alarms = alarmStorage.getEnabledAlarms()
+        
+        if (alarms.isNotEmpty()) {
+            // Get the first enabled alarm (for simplicity, this app handles one alarm at a time)
+            val alarm = alarms.first()
+            currentAlarmId = alarm.id
+            
+            // Update UI to reflect the loaded alarm
+            val timeFormat = if (is24hFormat) SimpleDateFormat("HH:mm", Locale.getDefault())
+            else SimpleDateFormat("hh:mm a", Locale.getDefault())
+            
+            val alarmCal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, alarm.hourOfDay)
+                set(Calendar.MINUTE, alarm.minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
+            }
+            
+            alarmCalendar = alarmCal
+            
+            // Set end time if configured
+            if (alarm.hasEndTime && alarm.endHourOfDay != null && alarm.endMinute != null) {
+                endTimeCalendar = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, alarm.endHourOfDay)
+                    set(Calendar.MINUTE, alarm.endMinute)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                    if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
+                    if (timeInMillis <= alarmCal.timeInMillis) add(Calendar.DAY_OF_MONTH, 1)
+                }
+            }
+            
+            val alarmTimeStr = timeFormat.format(alarmCal.time)
+            val friendly = friendlyInDuration(Calendar.getInstance(), alarmCal)
+            val endSuffix = endTimeCalendar?.let { "  → auto-stop at ${timeFormat.format(it.time)}" } ?: ""
+            
+            alarmTimeText.text = "⚡ ALARM: $alarmTimeStr  ($friendly)$endSuffix"
+            alarmTimeText.setTextColor(Color.parseColor("#00FF88"))
+        }
     }
     
     override fun onDestroy() {

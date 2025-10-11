@@ -8,6 +8,16 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Keep CPU awake briefly while handling alarm -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Schedule exact alarms (Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Alternative for exact alarms -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Receive boot completed to restore alarms after reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Foreground service permission (Android 9+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Foreground service type for alarms (Android 14+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application
         android:allowBackup="true"
@@ -18,6 +28,7 @@
         android:theme="@android:style/Theme.Material.Light.DarkActionBar"
         tools:targetApi="31">
         
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -27,6 +38,45 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <!-- Alarm Dismiss Activity (Full-screen) -->
+        <activity
+            android:name=".alarm.AlarmDismissActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true" />
+        
+        <!-- Alarm Notification Service -->
+        <service
+            android:name=".alarm.AlarmNotificationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="alarm" />
+        </service>
+        
+        <!-- Alarm Receiver (handles AlarmManager broadcasts) -->
+        <receiver
+            android:name=".alarm.AlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        
+        <!-- Boot Completed Receiver (restores alarms after reboot) -->
+        <receiver
+            android:name=".alarm.BootCompletedReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
         
     </application>
 
