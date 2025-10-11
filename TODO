@@ -1,3 +1,4 @@
-
-1) END TIME - Implemented optional end time with toggle, pickers, and auto-stop logic.
-2) NOT SHOWING PUZZLE WHEN CLICKING AND BACKING. - Restores puzzle dialog on resume when alarm is ringing.
+UI
+1) TIME GREY COLOR,
+2) PUZZLE BOX,
+3) COMING ALARM WITHIN HOW MANY MINUTES

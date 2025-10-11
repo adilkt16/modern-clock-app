@@ -61,7 +61,6 @@ class MainActivity : Activity() {
     private var isEndPm: Boolean = false
     private val handler = Handler(Looper.getMainLooper())
     private var timeUpdateRunnable: Runnable? = null
-    private var alarmCalendar: Calendar? = null
     private var endTimeCalendar: Calendar? = null
     private var mediaPlayer: MediaPlayer? = null
     private var alarmDialog: AlertDialog? = null
@@ -504,20 +503,14 @@ class MainActivity : Activity() {
     private fun updateTime() {
         val now = Calendar.getInstance()
         
+        // Show next upcoming alarm instead of current time
+        updateNextAlarmDisplay()
+        
+        // Show current time with seconds in the date area
         val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-        timeDisplay.text = timeFormat.format(now.time)
+        dateDisplay.text = timeFormat.format(now.time)
         
-        val dateFormat = SimpleDateFormat("EEEE, MMM dd yyyy", Locale.getDefault())
-        dateDisplay.text = dateFormat.format(now.time).uppercase()
-        
-        // Check if alarm should trigger
-        alarmCalendar?.let { alarm ->
-            if (now.timeInMillis >= alarm.timeInMillis && !isAlarmRinging) {
-                triggerAlarm()
-            }
-        }
-
-        // Auto-stop when end time reached
+        // Auto-stop when end time reached (only if alarm is already ringing)
         if (isAlarmRinging && endTimeCalendar != null) {
             endTimeCalendar?.let { endCal ->
                 if (now.timeInMillis >= endCal.timeInMillis) {
@@ -525,6 +518,74 @@ class MainActivity : Activity() {
                 }
             }
         }
+    }
+    
+    private fun updateNextAlarmDisplay() {
+        val nextAlarm = getNextUpcomingAlarm()
+        
+        if (nextAlarm == null) {
+            timeDisplay.text = "No Upcoming Alarm"
+            timeDisplay.textSize = 36f  // Smaller text size for "No Upcoming Alarm"
+            return
+        }
+        
+        // Reset to normal text size for alarm countdown
+        timeDisplay.textSize = 56f
+        
+        val now = Calendar.getInstance()
+        val alarmTime = nextAlarm.getTriggerTimeMillis()
+        val timeDifferenceMillis = alarmTime - now.timeInMillis
+        
+        if (timeDifferenceMillis <= 0) {
+            timeDisplay.text = "Alarm Now"
+            return
+        }
+        
+        val hours = timeDifferenceMillis / (1000 * 60 * 60)
+        val minutes = (timeDifferenceMillis % (1000 * 60 * 60)) / (1000 * 60)
+        
+        val timeText = when {
+            hours > 0 -> {
+                if (hours == 1L && minutes == 0L) {
+                    "Next Alarm within 1 hour"
+                } else if (hours == 1L) {
+                    "Next Alarm within 1 hour $minutes min"
+                } else if (minutes == 0L) {
+                    "Next Alarm within $hours hours"
+                } else {
+                    "Next Alarm within $hours hours $minutes min"
+                }
+            }
+            minutes > 0 -> {
+                if (minutes == 1L) {
+                    "Next Alarm within 1 minute"
+                } else {
+                    "Next Alarm within $minutes minutes"
+                }
+            }
+            else -> "Next Alarm within 1 minute"
+        }
+        
+        timeDisplay.text = timeText
+    }
+    
+    private fun getNextUpcomingAlarm(): Alarm? {
+        val enabledAlarms = alarmStorage.getEnabledAlarms()
+        if (enabledAlarms.isEmpty()) return null
+        
+        val now = Calendar.getInstance()
+        var nextAlarm: Alarm? = null
+        var nextTriggerTime = Long.MAX_VALUE
+        
+        for (alarm in enabledAlarms) {
+            val triggerTime = alarm.getTriggerTimeMillis()
+            if (triggerTime > now.timeInMillis && triggerTime < nextTriggerTime) {
+                nextAlarm = alarm
+                nextTriggerTime = triggerTime
+            }
+        }
+        
+        return nextAlarm
     }
     
     private fun setAlarm() {
@@ -573,8 +634,8 @@ class MainActivity : Activity() {
         // Schedule with AlarmManager
         alarmScheduler.scheduleAlarm(alarm)
         
-        // Update legacy alarm calendar for in-app checking
-        alarmCalendar = Calendar.getInstance().apply {
+        // Create calendar for display purposes only
+        val displayCalendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
@@ -591,21 +652,22 @@ class MainActivity : Activity() {
                 set(Calendar.MILLISECOND, 0)
                 val now = Calendar.getInstance()
                 if (before(now)) add(Calendar.DAY_OF_MONTH, 1)
-                alarmCalendar?.let { startCal ->
-                    if (timeInMillis <= startCal.timeInMillis) add(Calendar.DAY_OF_MONTH, 1)
-                }
+                if (timeInMillis <= displayCalendar.timeInMillis) add(Calendar.DAY_OF_MONTH, 1)
             }
         } else null
 
         val timeFormat = if (is24hFormat) SimpleDateFormat("HH:mm", Locale.getDefault())
         else SimpleDateFormat("hh:mm a", Locale.getDefault())
-        val alarmTimeStr = timeFormat.format(alarmCalendar!!.time)
+        val alarmTimeStr = timeFormat.format(displayCalendar.time)
 
-        val friendly = friendlyInDuration(Calendar.getInstance(), alarmCalendar!!)
+        val friendly = friendlyInDuration(Calendar.getInstance(), displayCalendar)
         val endSuffix = endTimeCalendar?.let { "  → auto-stop at ${timeFormat.format(it.time)}" } ?: ""
         alarmTimeText.text = "⚡ ALARM: $alarmTimeStr  ($friendly)$endSuffix"
         alarmTimeText.setTextColor(Color.parseColor("#00FF88"))
         alarmTimeText.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+
+        // Update the main display to show next upcoming alarm
+        updateNextAlarmDisplay()
 
         Toast.makeText(this, "⚡ ALARM SAVED & SCHEDULED: $alarmTimeStr — $friendly$endSuffix", Toast.LENGTH_LONG).show()
     }
@@ -637,12 +699,15 @@ class MainActivity : Activity() {
         }
         
         currentAlarmId = null
-        alarmCalendar = null
         endTimeCalendar = null
         alarmTimeText.text = "NO ALARM SET"
         alarmTimeText.setTextColor(Color.parseColor("#B0B8D4"))
         stopAlarmSound()
         clearAlarmNotification()
+        
+        // Update the main display to show next upcoming alarm
+        updateNextAlarmDisplay()
+        
         Toast.makeText(this, "🔕 ALARM DISARMED", Toast.LENGTH_SHORT).show()
     }
     
@@ -825,7 +890,6 @@ class MainActivity : Activity() {
         val endStr = endTimeCalendar?.let { fmt.format(it.time) } ?: "END"
         alarmTimeText.text = "🔕 AUTO-STOPPED AT $endStr"
         alarmTimeText.setTextColor(Color.parseColor("#B0B8D4"))
-        alarmCalendar = null
         endTimeCalendar = null
         Toast.makeText(this, "⏹️ Alarm auto-stopped", Toast.LENGTH_SHORT).show()
     }
@@ -901,8 +965,6 @@ class MainActivity : Activity() {
                 set(Calendar.MILLISECOND, 0)
                 if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
             }
-            
-            alarmCalendar = alarmCal
             
             // Set end time if configured
             if (alarm.hasEndTime && alarm.endHourOfDay != null && alarm.endMinute != null) {
