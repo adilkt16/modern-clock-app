@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
 import android.media.MediaPlayer
 import android.media.RingtoneManager
@@ -19,6 +20,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.HapticFeedbackConstants
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -178,6 +180,8 @@ class MainActivity : Activity() {
             setFormatter { String.format("%02d", it) }
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 12, 0) }
         }
+    styleNumberPicker(hourPicker)
+    attachNumberPickerStyleHooks(hourPicker)
         val colon = TextView(this).apply {
             text = ":"
             textSize = 24f
@@ -191,17 +195,53 @@ class MainActivity : Activity() {
             setFormatter { String.format("%02d", it) }
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 12, 0) }
         }
+    styleNumberPicker(minutePicker)
+    attachNumberPickerStyleHooks(minutePicker)
         ampmToggle = ToggleButton(this).apply {
             textOn = "PM"
             textOff = "AM"
             text = textOff
             isChecked = false
+            setTextColor(Color.WHITE)
+            setBackgroundResource(R.drawable.bg_outline_button)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
         }
         timeRow.addView(hourPicker)
         timeRow.addView(colon)
         timeRow.addView(minutePicker)
         timeRow.addView(ampmToggle)
+
+        // Labels under pickers for clarity
+        val labelsRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(0, 6, 0, 0)
+            }
+        }
+        val hourLabel = TextView(this).apply {
+            text = "Hour"
+            textSize = 12f
+            setTextColor(Color.parseColor("#B0B8D4"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 12, 0) }
+        }
+        val spacer = TextView(this).apply { text = "  " }
+        val minuteLabel = TextView(this).apply {
+            text = "Minute"
+            textSize = 12f
+            setTextColor(Color.parseColor("#B0B8D4"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 12, 0) }
+        }
+        val ampmLabel = TextView(this).apply {
+            text = "AM/PM"
+            textSize = 12f
+            setTextColor(Color.parseColor("#B0B8D4"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
+        }
+        labelsRow.addView(hourLabel)
+        labelsRow.addView(spacer)
+        labelsRow.addView(minuteLabel)
+        labelsRow.addView(ampmLabel)
 
         // 24H format toggle row
         val formatRow = LinearLayout(this).apply {
@@ -281,8 +321,12 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         endTimeSwitch = Switch(this).apply { isChecked = false }
+        // We'll set this to the actual row after it's created
+        var endTimeRowRef: LinearLayout? = null
         endTimeSwitch.setOnCheckedChangeListener { _, checked ->
             isEndTimeEnabled = checked
+            // Show/hide the entire end-time picker row based on toggle
+            endTimeRowRef?.visibility = if (checked) View.VISIBLE else View.GONE
             setEndTimeControlsEnabled(checked)
         }
         endHeaderRow.addView(endLabel)
@@ -292,6 +336,8 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
+        // Wire the reference so the listener above can control visibility
+        endTimeRowRef = endTimeRow
         endHourPicker = NumberPicker(this).apply {
             minValue = 0
             maxValue = 23
@@ -299,6 +345,8 @@ class MainActivity : Activity() {
             setFormatter { String.format("%02d", it) }
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 12, 0) }
         }
+        styleNumberPicker(endHourPicker)
+        attachNumberPickerStyleHooks(endHourPicker)
         val endColon = TextView(this).apply {
             text = ":"
             textSize = 24f
@@ -312,17 +360,24 @@ class MainActivity : Activity() {
             setFormatter { String.format("%02d", it) }
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 12, 0) }
         }
+        styleNumberPicker(endMinutePicker)
+        attachNumberPickerStyleHooks(endMinutePicker)
         endAmpmToggle = ToggleButton(this).apply {
             textOn = "PM"
             textOff = "AM"
             text = textOff
             isChecked = false
+            setTextColor(Color.WHITE)
+            setBackgroundResource(R.drawable.bg_outline_button)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
         }
-        endTimeRow.addView(endHourPicker)
+    endTimeRow.addView(endHourPicker)
         endTimeRow.addView(endColon)
         endTimeRow.addView(endMinutePicker)
         endTimeRow.addView(endAmpmToggle)
+
+    // Hide end-time controls by default; show only when toggle is ON
+    endTimeRow.visibility = View.GONE
 
         endRowContainer.addView(endHeaderRow)
         endRowContainer.addView(endTimeRow)
@@ -375,6 +430,7 @@ class MainActivity : Activity() {
         buttonContainer.addView(clearAlarmButton)
         
     alarmCard.addView(timeRow)
+    alarmCard.addView(labelsRow)
     alarmCard.addView(endRowContainer)
     alarmCard.addView(formatRow)
     alarmCard.addView(buttonContainer)
@@ -517,6 +573,74 @@ class MainActivity : Activity() {
         endHourPicker.alpha = alpha
         endMinutePicker.alpha = alpha
         endAmpmToggle.alpha = alpha
+    }
+
+    // Improve NumberPicker readability: white text, bold monospace, neon divider
+    private fun styleNumberPicker(np: NumberPicker) {
+        np.setWrapSelectorWheel(true)
+        np.descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
+
+        // Update internal selector paint color
+        try {
+            val selectorField = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")
+            selectorField.isAccessible = true
+            val paint = selectorField.get(np) as Paint
+            paint.color = Color.WHITE
+            paint.textSize = paint.textSize * 1.1f
+        } catch (_: Exception) {
+        }
+
+        // Update child EditText appearance
+        for (i in 0 until np.childCount) {
+            val child = np.getChildAt(i)
+            if (child is EditText) {
+                child.setTextColor(Color.WHITE)
+                child.textSize = 22f
+                child.typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                child.isCursorVisible = false
+                child.setBackgroundColor(Color.TRANSPARENT)
+            }
+        }
+
+        // Set selection divider color and height
+        try {
+            val dividerField = NumberPicker::class.java.getDeclaredField("mSelectionDivider")
+            dividerField.isAccessible = true
+            dividerField.set(np, ColorDrawable(Color.parseColor("#00D9FF")))
+        } catch (_: Exception) {
+        }
+        try {
+            val heightField = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight")
+            heightField.isAccessible = true
+            heightField.setInt(np, dpToPx(2))
+        } catch (_: Exception) {
+        }
+
+        np.invalidate()
+    }
+
+    // Re-apply styling on interactions to avoid default style flashing
+    private fun attachNumberPickerStyleHooks(np: NumberPicker) {
+        np.setOnValueChangedListener { picker, _, _ ->
+            styleNumberPicker(picker)
+        }
+        np.setOnScrollListener { picker, state ->
+            if (state == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE) {
+                styleNumberPicker(picker)
+            }
+        }
+        np.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                // Re-apply shortly after touch ends
+                handler.post { styleNumberPicker(np) }
+            }
+            false
+        }
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        val scale = resources.displayMetrics.density
+        return (dp * scale + 0.5f).toInt()
     }
     
     private fun updateTime() {
