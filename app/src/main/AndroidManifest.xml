@@ -39,6 +39,12 @@
             </intent-filter>
         </activity>
         
+        <!-- Settings Activity -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        
         <!-- Alarm Dismiss Activity (Full-screen) -->
         <activity
             android:name=".alarm.AlarmDismissActivity"

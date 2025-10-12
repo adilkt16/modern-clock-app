@@ -83,6 +83,10 @@ class MainActivity : Activity() {
         alarmStorage = AlarmStorage.getInstance(this)
         alarmScheduler = AlarmScheduler.getInstance(this)
         
+        // Load settings from SharedPreferences
+        val sharedPrefs = getSharedPreferences("ClockAppSettings", Context.MODE_PRIVATE)
+        is24hFormat = sharedPrefs.getBoolean("is24hFormat", true)
+        
         // Main container with modern gradient background
         val mainLayout = FrameLayout(this).apply {
             // Create a subtle gradient from dark blue to lighter blue
@@ -109,8 +113,12 @@ class MainActivity : Activity() {
         // AltRise Logo and Title in horizontal layout
         val logoContainer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
+            gravity = Gravity.CENTER_VERTICAL
             setPadding(0, 0, 0, 40)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
         
         val logo = ImageView(this).apply {
@@ -128,10 +136,33 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             typeface = Typeface.DEFAULT_BOLD
             setShadowLayer(8f, 0f, 2f, Color.parseColor("#4CAF50"))
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+        
+        // Settings button
+        val settingsButton = Button(this).apply {
+            text = "⚙️"
+            textSize = 18f
+            setTextColor(Color.WHITE)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setColor(Color.parseColor("#4CAF50"))
+                setStroke(2, Color.parseColor("#2E7D32"))
+            }
+            layoutParams = LinearLayout.LayoutParams(80, 80)
+            setOnClickListener {
+                val intent = Intent(this@MainActivity, SettingsActivity::class.java)
+                startActivityForResult(intent, 1001)
+            }
         }
         
         logoContainer.addView(logo)
         logoContainer.addView(title)
+        logoContainer.addView(settingsButton)
         
         // Glass card for clock display
         val clockCard = LinearLayout(this).apply {
@@ -534,6 +565,32 @@ class MainActivity : Activity() {
 
         // If launched while an alarm is active (manual open), route to full-screen puzzle
         routeToPuzzleIfNeeded(intent)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            // Settings activity returned with changes
+            data?.let {
+                if (it.getBooleanExtra("timeFormatChanged", false)) {
+                    // Reload the time format setting
+                    val sharedPrefs = getSharedPreferences("ClockAppSettings", Context.MODE_PRIVATE)
+                    is24hFormat = sharedPrefs.getBoolean("is24hFormat", true)
+                    
+                    // Update UI to reflect new time format
+                    updateTimeFormatDisplay()
+                }
+            }
+        }
+    }
+
+    private fun updateTimeFormatDisplay() {
+        // Update AM/PM toggle visibility
+        ampmToggle.visibility = if (is24hFormat) View.GONE else View.VISIBLE
+        endAmpmToggle.visibility = if (is24hFormat) View.GONE else View.VISIBLE
+        
+        // Update time display
+        updateTime()
     }
 
     override fun onResume() {

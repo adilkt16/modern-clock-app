@@ -38,6 +38,9 @@ build/
 *.log
 
 # Android Studio captures folder
+# Keystore files (do not upload to GitHub)
+*.jks
+*.keystore
 /captures
 .externalNativeBuild
 .cxx
