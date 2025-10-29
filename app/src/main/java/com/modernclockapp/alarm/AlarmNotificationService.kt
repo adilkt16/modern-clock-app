@@ -3,6 +3,8 @@ package com.modernclockapp.alarm
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
@@ -145,18 +147,30 @@ class AlarmNotificationService : Service() {
         try {
             mediaPlayer?.release()
             
+            // Create audio attributes for alarm
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            
             // Try to use custom alarm sound first, fallback to default
-            mediaPlayer = try {
-                MediaPlayer.create(this, R.raw.sound1)
-            } catch (e: Exception) {
-                Log.w(TAG, "Custom sound not found, using default alarm sound")
-                val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                MediaPlayer.create(this, alarmUri)
+            mediaPlayer = MediaPlayer().apply {
+                try {
+                    setDataSource(this@AlarmNotificationService, 
+                        android.net.Uri.parse("android.resource://" + packageName + "/" + R.raw.sound1))
+                } catch (e: Exception) {
+                    Log.w(TAG, "Custom sound not found, using default alarm sound")
+                    setDataSource(this@AlarmNotificationService, 
+                        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+                }
+                
+                setAudioAttributes(audioAttributes)
+                isLooping = true
+                prepare()
             }
             
-            mediaPlayer?.isLooping = true
             mediaPlayer?.start()
-            Log.d(TAG, "Alarm sound started")
+            Log.d(TAG, "Alarm sound started with USAGE_ALARM")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start alarm sound", e)
         }

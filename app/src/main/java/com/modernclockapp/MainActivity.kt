@@ -12,6 +12,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
@@ -989,9 +991,21 @@ class MainActivity : Activity() {
     private fun playAlarmSound() {
         try {
             mediaPlayer?.release()
-            mediaPlayer = MediaPlayer.create(this, R.raw.sound1)
-            mediaPlayer?.isLooping = true
-            mediaPlayer?.start()
+            
+            // Create audio attributes for alarm
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(this@MainActivity, 
+                    android.net.Uri.parse("android.resource://" + packageName + "/" + R.raw.sound1))
+                setAudioAttributes(audioAttributes)
+                isLooping = true
+                prepare()
+                start()
+            }
         } catch (e: Exception) {
             Toast.makeText(this, "Could not play alarm sound: ${e.message}", Toast.LENGTH_SHORT).show()
         }
