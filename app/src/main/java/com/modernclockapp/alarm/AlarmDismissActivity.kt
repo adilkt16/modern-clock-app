@@ -107,8 +107,8 @@ class AlarmDismissActivity : Activity() {
     private fun setupUI(alarm: com.modernclockapp.models.Alarm) {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#0A0E27"))
-            setPadding(60, 80, 60, 80)
+            setBackgroundColor(Color.parseColor("#0A0A0A"))  // AltRise black background
+            setPadding(80, 120, 80, 120)
             gravity = Gravity.CENTER
         }
         
@@ -121,28 +121,30 @@ class AlarmDismissActivity : Activity() {
         
         val timeText = TextView(this).apply {
             text = timeFormat.format(alarmTime.time)
-            textSize = 64f
-            setTextColor(Color.parseColor("#00D9FF"))
+            textSize = 72f
+            setTextColor(Color.parseColor("#31A82A"))  // AltRise green
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
             gravity = Gravity.CENTER
-            setShadowLayer(30f, 0f, 0f, Color.parseColor("#00D9FF"))
+            setShadowLayer(40f, 0f, 0f, Color.parseColor("#31A82A"))  // Green glow
+            letterSpacing = 0.1f
         }
         
         val title = TextView(this).apply {
             text = "⚡ ALARM ACTIVE!"
-            textSize = 28f
-            setTextColor(Color.parseColor("#00D9FF"))
+            textSize = 24f
+            setTextColor(Color.parseColor("#E87316"))  // AltRise orange
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setPadding(0, 40, 0, 20)
+            setPadding(0, 50, 0, 15)
+            letterSpacing = 0.05f
         }
         
         val subtitle = TextView(this).apply {
             text = "Solve the puzzle to dismiss"
-            textSize = 18f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            textSize = 16f
+            setTextColor(Color.parseColor("#999999"))  // Subtle gray
             gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 40)
+            setPadding(0, 0, 0, 60)
         }
         
         // Generate math puzzle
@@ -151,34 +153,36 @@ class AlarmDismissActivity : Activity() {
         
         val puzzleText = TextView(this).apply {
             text = puzzleTextStr
-            textSize = 36f
+            textSize = 48f
             setTextColor(Color.WHITE)
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
             gravity = Gravity.CENTER
-            setPadding(0, 30, 0, 30)
+            setPadding(40, 40, 40, 40)
+            setBackgroundColor(Color.parseColor("#1A1A1A"))  // Slightly lighter black
+            letterSpacing = 0.15f
         }
         
         val input = EditText(this).apply {
-            hint = "Enter answer"
-            textSize = 28f
+            hint = "Your answer"
+            textSize = 32f
             setTextColor(Color.WHITE)
-            setHintTextColor(Color.parseColor("#6C5CE7"))
+            setHintTextColor(Color.parseColor("#555555"))
             gravity = Gravity.CENTER
             inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_SIGNED
-            setBackgroundColor(Color.parseColor("#1A1E3C"))
-            setPadding(30, 30, 30, 30)
+            setBackgroundColor(Color.parseColor("#1A1A1A"))  // Dark input background
+            setPadding(40, 40, 40, 40)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 20, 0, 20)
+                setMargins(0, 40, 0, 20)
             }
         }
         
         val feedback = TextView(this).apply {
             textSize = 16f
             gravity = Gravity.CENTER
-            setPadding(0, 10, 0, 20)
+            setPadding(20, 10, 20, 20)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 120
@@ -189,11 +193,12 @@ class AlarmDismissActivity : Activity() {
             text = "CHECK ANSWER"
             textSize = 18f
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#6C5CE7"))
+            setBackgroundColor(Color.parseColor("#E87316"))  // AltRise orange
             typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 20, 0, 20)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                140
+                160
             ).apply {
                 setMargins(0, 10, 0, 10)
             }
@@ -203,13 +208,14 @@ class AlarmDismissActivity : Activity() {
             text = "DISMISS ALARM"
             textSize = 18f
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#00AA66"))
+            setBackgroundColor(Color.parseColor("#31A82A"))  // AltRise green
             typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 20, 0, 20)
             isEnabled = false
-            alpha = 0.5f
+            alpha = 0.3f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                140
+                160
             )
         }
         
@@ -218,16 +224,37 @@ class AlarmDismissActivity : Activity() {
             
             if (userAnswer == currentMathAnswer) {
                 mathPuzzleSolved = true
-                feedback.text = "✅ Correct! You can now dismiss the alarm."
-                feedback.setTextColor(Color.parseColor("#00FF88"))
+                feedback.text = "✓ Correct! Tap below to dismiss"
+                feedback.setTextColor(Color.parseColor("#31A82A"))  // Green for success
                 input.isEnabled = false
+                input.alpha = 0.5f
                 checkBtn.isEnabled = false
+                checkBtn.alpha = 0.3f
                 dismissBtn.isEnabled = true
                 dismissBtn.alpha = 1.0f
+                
+                // Add vibration feedback
+                val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(android.os.VibrationEffect.createOneShot(200, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(200)
+                }
             } else {
-                feedback.text = "❌ Incorrect. Try again!\nHint: Answer is between 0 and 50"
-                feedback.setTextColor(Color.parseColor("#FF6B6B"))
+                feedback.text = "✗ Incorrect - Try again"
+                feedback.setTextColor(Color.parseColor("#E87316"))  // Orange for error
                 input.text.clear()
+                input.requestFocus()
+                
+                // Subtle vibration for wrong answer
+                val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(android.os.VibrationEffect.createOneShot(100, 100))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(100)
+                }
             }
         }
         

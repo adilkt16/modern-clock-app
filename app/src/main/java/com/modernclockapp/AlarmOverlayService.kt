@@ -110,62 +110,85 @@ class AlarmOverlayService : Service() {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#0A0A0A")) // AltRise black
             gravity = Gravity.CENTER
-            setPadding(60, 80, 60, 80)
+            setPadding(80, 0, 80, 0)
         }
         
-        // Alarm icon/emoji
+        // Alarm icon/emoji - larger and centered
         val alarmIcon = TextView(this).apply {
             text = "⏰"
-            textSize = 80f
+            textSize = 120f
             gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 40)
         }
         
         // Time display
         val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
         val timeText = TextView(this).apply {
             text = currentTime
-            textSize = 72f
+            textSize = 82f
             setTextColor(Color.parseColor("#31A82A")) // AltRise green
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
             gravity = Gravity.CENTER
-            setShadowLayer(30f, 0f, 0f, Color.parseColor("#31A82A"))
-            setPadding(0, 20, 0, 20)
+            setShadowLayer(45f, 0f, 0f, Color.parseColor("#31A82A"))
+            letterSpacing = 0.15f
+            setPadding(0, 20, 0, 30)
         }
         
         // Title
         val title = TextView(this).apply {
             text = "⚡ ALARM RINGING!"
-            textSize = 32f
+            textSize = 28f
             setTextColor(Color.parseColor("#E87316")) // AltRise orange
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setShadowLayer(15f, 0f, 0f, Color.parseColor("#E87316"))
-            setPadding(0, 40, 0, 60)
+            setShadowLayer(20f, 0f, 0f, Color.parseColor("#E87316"))
+            letterSpacing = 0.08f
+            setPadding(0, 20, 0, 15)
         }
         
-        // Solve Puzzle button
+        // Subtitle
+        val subtitle = TextView(this).apply {
+            text = "Tap below to solve puzzle"
+            textSize = 16f
+            setTextColor(Color.parseColor("#999999"))
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 80)
+        }
+        
+        // Solve Puzzle button - modern design
         val solvePuzzleButton = Button(this).apply {
             text = "SOLVE PUZZLE"
-            textSize = 24f
+            textSize = 22f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
             background = android.graphics.drawable.GradientDrawable().apply {
                 colors = intArrayOf(
-                    Color.parseColor("#31A82A"),
-                    Color.parseColor("#4FBF47")
+                    Color.parseColor("#E87316"),  // AltRise orange
+                    Color.parseColor("#FF9233")   // Lighter orange gradient
                 )
-                cornerRadius = 24f
-                setStroke(4, Color.WHITE)
+                cornerRadius = 16f
+                setStroke(3, Color.parseColor("#FFFFFF"))
             }
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                200
+                180
             ).apply {
-                setMargins(40, 0, 40, 0)
+                setMargins(0, 0, 0, 0)
             }
-            elevation = 12f
+            elevation = 16f
+            elevation = 16f
+            setPadding(60, 0, 60, 0)
             
             setOnClickListener {
+                // Add haptic feedback
+                val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(android.os.VibrationEffect.createOneShot(50, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(50)
+                }
+                
                 openDismissActivity()
                 removeOverlay()
             }
@@ -174,6 +197,7 @@ class AlarmOverlayService : Service() {
         container.addView(alarmIcon)
         container.addView(timeText)
         container.addView(title)
+        container.addView(subtitle)
         container.addView(solvePuzzleButton)
         
         return container
