@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.Paint
@@ -74,6 +75,7 @@ class MainActivity : Activity() {
     private val notificationId = 1001
     private val channelId = "ALARM_CHANNEL"
     private val requestPostNotif = 2001
+    private val requestOverlayPermission = 2002
     // Puzzle gating state
     private var mathPuzzleSolved: Boolean = false
     private var currentMathAnswer: Int = 0
@@ -647,6 +649,21 @@ class MainActivity : Activity() {
             }
         }
         createNotificationChannel()
+        // Also request overlay permission
+        requestOverlayPermission()
+    }
+    
+    private fun requestOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!android.provider.Settings.canDrawOverlays(this)) {
+                val intent = Intent(
+                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivityForResult(intent, requestOverlayPermission)
+                Toast.makeText(this, "Please grant 'Display over other apps' permission for alarm to work properly", Toast.LENGTH_LONG).show()
+            }
+        }
     }
     
     private fun createNotificationChannel() {
