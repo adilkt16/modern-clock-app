@@ -1,10 +1,10 @@
-package com.modernclockapp.alarm
+package com.altrise.clockapp.alarm
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 // import android.util.Log (removed for release)
-import com.modernclockapp.storage.AlarmStorage
+import com.altrise.clockapp.storage.AlarmStorage
 
 /**
  * BroadcastReceiver that handles alarm triggers from AlarmManager.

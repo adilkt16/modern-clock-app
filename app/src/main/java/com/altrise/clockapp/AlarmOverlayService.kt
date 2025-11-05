@@ -1,4 +1,4 @@
-package com.modernclockapp
+package com.altrise.clockapp
 
 import android.app.Service
 import android.content.Context
@@ -16,10 +16,10 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.modernclockapp.alarm.AlarmDismissActivity
-import com.modernclockapp.alarm.AlarmScheduler
-import com.modernclockapp.models.Alarm
-import com.modernclockapp.storage.AlarmStorage
+import com.altrise.clockapp.alarm.AlarmDismissActivity
+import com.altrise.clockapp.alarm.AlarmScheduler
+import com.altrise.clockapp.models.Alarm
+import com.altrise.clockapp.storage.AlarmStorage
 import java.text.SimpleDateFormat
 import java.util.*
 

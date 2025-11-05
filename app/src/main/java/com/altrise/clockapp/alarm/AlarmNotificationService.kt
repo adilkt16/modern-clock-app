@@ -1,4 +1,4 @@
-package com.modernclockapp.alarm
+package com.altrise.clockapp.alarm
 
 import android.app.*
 import android.content.Context
@@ -13,8 +13,8 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.modernclockapp.R
-import com.modernclockapp.storage.AlarmStorage
+import com.altrise.clockapp.R
+import com.altrise.clockapp.storage.AlarmStorage
 import java.util.*
 
 /**
@@ -33,9 +33,9 @@ class AlarmNotificationService : Service() {
         private const val TAG = "AlarmNotificationService"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "ALARM_CHANNEL"
-        const val ACTION_DISMISS = "com.modernclockapp.ACTION_DISMISS_ALARM"
-        const val ACTION_STOP_SERVICE = "com.modernclockapp.ACTION_STOP_SERVICE"
-        const val ACTION_AUTO_STOP = "com.modernclockapp.ACTION_AUTO_STOP"
+        const val ACTION_DISMISS = "com.altrise.clockapp.ACTION_DISMISS_ALARM"
+        const val ACTION_STOP_SERVICE = "com.altrise.clockapp.ACTION_STOP_SERVICE"
+        const val ACTION_AUTO_STOP = "com.altrise.clockapp.ACTION_AUTO_STOP"
     }
     
     override fun onCreate() {
@@ -224,7 +224,7 @@ class AlarmNotificationService : Service() {
         
         if (hasOverlayPermission) {
             // Show overlay with "Solve puzzle" button
-            val overlayIntent = Intent(this, com.modernclockapp.AlarmOverlayService::class.java).apply {
+            val overlayIntent = Intent(this, com.altrise.clockapp.AlarmOverlayService::class.java).apply {
                 putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
             }
             startService(overlayIntent)

@@ -1,8 +1,8 @@
-package com.modernclockapp.storage
+package com.altrise.clockapp.storage
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.modernclockapp.models.Alarm
+import com.altrise.clockapp.models.Alarm
 import org.json.JSONArray
 import org.json.JSONObject
 

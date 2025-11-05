@@ -1,4 +1,4 @@
-package com.modernclockapp.alarm
+package com.altrise.clockapp.alarm
 
 import android.content.Context
 import android.content.SharedPreferences

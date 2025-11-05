@@ -1,4 +1,4 @@
-package com.modernclockapp.models
+package com.altrise.clockapp.models
 
 import org.json.JSONObject
 

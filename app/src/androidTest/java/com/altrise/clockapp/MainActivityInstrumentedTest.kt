@@ -1,4 +1,4 @@
-package com.modernclockapp
+package com.altrise.clockapp
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4

@@ -1,4 +1,4 @@
-package com.modernclockapp.alarm
+package com.altrise.clockapp.alarm
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -6,8 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 // import android.util.Log (removed for release)
-import com.modernclockapp.models.Alarm
-import com.modernclockapp.storage.AlarmStorage
+import com.altrise.clockapp.models.Alarm
+import com.altrise.clockapp.storage.AlarmStorage
 
 /**
  * Manages scheduling of alarms using Android's AlarmManager.
@@ -20,7 +20,7 @@ class AlarmScheduler(private val context: Context) {
     
     companion object {
         private const val TAG = "AlarmScheduler"
-        const val ACTION_ALARM_TRIGGER = "com.modernclockapp.ACTION_ALARM_TRIGGER"
+        const val ACTION_ALARM_TRIGGER = "com.altrise.clockapp.ACTION_ALARM_TRIGGER"
         const val EXTRA_ALARM_ID = "alarm_id"
         
         @Volatile

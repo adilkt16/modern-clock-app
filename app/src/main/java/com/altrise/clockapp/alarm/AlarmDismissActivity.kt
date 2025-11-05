@@ -1,4 +1,4 @@
-package com.modernclockapp.alarm
+package com.altrise.clockapp.alarm
 
 import android.app.Activity
 import android.content.BroadcastReceiver
@@ -13,8 +13,8 @@ import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.*
-import com.modernclockapp.R
-import com.modernclockapp.storage.AlarmStorage
+import com.altrise.clockapp.R
+import com.altrise.clockapp.storage.AlarmStorage
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -104,7 +104,7 @@ class AlarmDismissActivity : Activity() {
         setupUI(alarm)
     }
     
-    private fun setupUI(alarm: com.modernclockapp.models.Alarm) {
+    private fun setupUI(alarm: com.altrise.clockapp.models.Alarm) {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#0A0A0A"))  // AltRise black background

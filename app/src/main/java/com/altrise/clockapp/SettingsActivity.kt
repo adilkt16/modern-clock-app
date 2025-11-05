@@ -1,4 +1,4 @@
-package com.modernclockapp
+package com.altrise.clockapp
 
 import android.app.Activity
 import android.content.Context

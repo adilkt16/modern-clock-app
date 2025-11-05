@@ -1,7 +1,7 @@
-package com.modernclockapp
+package com.altrise.clockapp
 
-import com.modernclockapp.models.Alarm
-import com.modernclockapp.models.WorldClock
+import com.altrise.clockapp.models.Alarm
+import com.altrise.clockapp.models.WorldClock
 import org.junit.Test
 import org.junit.Assert.*
 import java.util.*

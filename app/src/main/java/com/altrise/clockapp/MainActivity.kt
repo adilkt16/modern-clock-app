@@ -1,4 +1,4 @@
-package com.modernclockapp
+package com.altrise.clockapp
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -30,17 +30,17 @@ import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.modernclockapp.alarm.AlarmScheduler
-import com.modernclockapp.alarm.AlarmState
-import com.modernclockapp.alarm.AlarmDismissActivity
-import com.modernclockapp.models.Alarm
-import com.modernclockapp.storage.AlarmStorage
+import com.altrise.clockapp.alarm.AlarmScheduler
+import com.altrise.clockapp.alarm.AlarmState
+import com.altrise.clockapp.alarm.AlarmDismissActivity
+import com.altrise.clockapp.models.Alarm
+import com.altrise.clockapp.storage.AlarmStorage
 import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : Activity() {
     companion object {
-        const val EXTRA_SHOW_PUZZLE = "com.modernclockapp.EXTRA_SHOW_PUZZLE"
+        const val EXTRA_SHOW_PUZZLE = "com.altrise.clockapp.EXTRA_SHOW_PUZZLE"
     }
     
     // Storage and scheduler for persistent alarms
@@ -628,7 +628,7 @@ class MainActivity : Activity() {
             if (alarmDialog?.isShowing == true) alarmDialog?.dismiss()
 
             val fs = Intent(this, AlarmDismissActivity::class.java).apply {
-                putExtra(com.modernclockapp.alarm.AlarmScheduler.EXTRA_ALARM_ID, activeId)
+                putExtra(com.altrise.clockapp.alarm.AlarmScheduler.EXTRA_ALARM_ID, activeId)
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             startActivity(fs)
