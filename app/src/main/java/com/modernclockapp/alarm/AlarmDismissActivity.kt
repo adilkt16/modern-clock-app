@@ -247,6 +247,25 @@ class AlarmDismissActivity : Activity() {
         container.addView(dismissBtn)
         
         setContentView(container)
+        
+        // Make fullscreen - hide status bar and navigation bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+            window.insetsController?.apply {
+                hide(android.view.WindowInsets.Type.statusBars() or android.view.WindowInsets.Type.navigationBars())
+                systemBarsBehavior = android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                android.view.View.SYSTEM_UI_FLAG_FULLSCREEN or
+                android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            )
+        }
     }
     
     private fun generateMathPuzzle(): Pair<String, Int> {

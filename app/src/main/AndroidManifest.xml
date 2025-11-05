@@ -67,6 +67,12 @@
                 android:value="alarm" />
         </service>
         
+        <!-- Alarm Overlay Service (shows floating alarm UI) -->
+        <service
+            android:name=".AlarmOverlayService"
+            android:enabled="true"
+            android:exported="false" />
+        
         <!-- Alarm Receiver (handles AlarmManager broadcasts) -->
         <receiver
             android:name=".alarm.AlarmReceiver"

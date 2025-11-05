@@ -1,0 +1,241 @@
+package com.modernclockapp
+
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.PixelFormat
+import android.graphics.Typeface
+import android.os.Build
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
+import com.modernclockapp.alarm.AlarmDismissActivity
+import com.modernclockapp.alarm.AlarmScheduler
+import com.modernclockapp.models.Alarm
+import com.modernclockapp.storage.AlarmStorage
+import java.text.SimpleDateFormat
+import java.util.*
+
+class AlarmOverlayService : Service() {
+    
+    private var windowManager: WindowManager? = null
+    private var overlayView: View? = null
+    private var alarmId: Int = -1
+    private val handler = Handler(Looper.getMainLooper())
+    private var endTimeCheckRunnable: Runnable? = null
+    
+    override fun onBind(intent: Intent?): IBinder? = null
+    
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        alarmId = intent?.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1) ?: -1
+        
+        if (canDrawOverlays()) {
+            showOverlay()
+            startEndTimeCheck()
+        } else {
+            // If no permission, open dismiss activity directly
+            openDismissActivity()
+            stopSelf()
+        }
+        
+        return START_NOT_STICKY
+    }
+    
+    private fun canDrawOverlays(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.provider.Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+    }
+    
+    private fun showOverlay() {
+        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        
+        // Create overlay layout
+        overlayView = createOverlayView()
+        
+        // Set window parameters for fullscreen immersive overlay
+        val params = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT
+            )
+        }
+        
+        params.gravity = Gravity.CENTER
+        
+        // Hide status bar and navigation bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            params.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        
+        // Add view to window
+        windowManager?.addView(overlayView, params)
+    }
+    
+    private fun createOverlayView(): View {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#0A0A0A")) // AltRise black
+            gravity = Gravity.CENTER
+            setPadding(60, 80, 60, 80)
+        }
+        
+        // Alarm icon/emoji
+        val alarmIcon = TextView(this).apply {
+            text = "⏰"
+            textSize = 80f
+            gravity = Gravity.CENTER
+        }
+        
+        // Time display
+        val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        val timeText = TextView(this).apply {
+            text = currentTime
+            textSize = 72f
+            setTextColor(Color.parseColor("#31A82A")) // AltRise green
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setShadowLayer(30f, 0f, 0f, Color.parseColor("#31A82A"))
+            setPadding(0, 20, 0, 20)
+        }
+        
+        // Title
+        val title = TextView(this).apply {
+            text = "⚡ ALARM RINGING!"
+            textSize = 32f
+            setTextColor(Color.parseColor("#E87316")) // AltRise orange
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setShadowLayer(15f, 0f, 0f, Color.parseColor("#E87316"))
+            setPadding(0, 40, 0, 60)
+        }
+        
+        // Solve Puzzle button
+        val solvePuzzleButton = Button(this).apply {
+            text = "SOLVE PUZZLE"
+            textSize = 24f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.DEFAULT_BOLD
+            background = android.graphics.drawable.GradientDrawable().apply {
+                colors = intArrayOf(
+                    Color.parseColor("#31A82A"),
+                    Color.parseColor("#4FBF47")
+                )
+                cornerRadius = 24f
+                setStroke(4, Color.WHITE)
+            }
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                200
+            ).apply {
+                setMargins(40, 0, 40, 0)
+            }
+            elevation = 12f
+            
+            setOnClickListener {
+                openDismissActivity()
+                removeOverlay()
+            }
+        }
+        
+        container.addView(alarmIcon)
+        container.addView(timeText)
+        container.addView(title)
+        container.addView(solvePuzzleButton)
+        
+        return container
+    }
+    
+    private fun openDismissActivity() {
+        val intent = Intent(this, AlarmDismissActivity::class.java).apply {
+            putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        startActivity(intent)
+    }
+    
+    private fun removeOverlay() {
+        overlayView?.let {
+            windowManager?.removeView(it)
+            overlayView = null
+        }
+        stopEndTimeCheck()
+        stopSelf()
+    }
+    
+    private fun startEndTimeCheck() {
+        // Check every second if end time is reached
+        endTimeCheckRunnable = object : Runnable {
+            override fun run() {
+                if (shouldAutoDismiss()) {
+                    removeOverlay()
+                } else {
+                    handler.postDelayed(this, 1000)
+                }
+            }
+        }
+        handler.post(endTimeCheckRunnable!!)
+    }
+    
+    private fun stopEndTimeCheck() {
+        endTimeCheckRunnable?.let {
+            handler.removeCallbacks(it)
+            endTimeCheckRunnable = null
+        }
+    }
+    
+    private fun shouldAutoDismiss(): Boolean {
+        if (alarmId == -1) return false
+        
+        val storage = AlarmStorage.getInstance(this)
+        val alarm = storage.getAlarm(alarmId) ?: return false
+        
+        // Check if alarm has end time set
+        if (!alarm.hasEndTime) return false
+        
+        val now = Calendar.getInstance()
+        val endTimeMillis = alarm.getEndTimeMillis() ?: return false
+        
+        // Auto-dismiss if current time >= end time
+        return now.timeInMillis >= endTimeMillis
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        removeOverlay()
+    }
+}

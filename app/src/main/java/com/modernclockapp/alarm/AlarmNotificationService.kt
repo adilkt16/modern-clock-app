@@ -215,16 +215,33 @@ class AlarmNotificationService : Service() {
     }
     
     private fun launchFullScreenActivity() {
-        val fullScreenIntent = Intent(this, AlarmDismissActivity::class.java).apply {
-            putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        // Check if overlay permission is granted
+        val hasOverlayPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.provider.Settings.canDrawOverlays(this)
+        } else {
+            false
         }
         
-        try {
-            startActivity(fullScreenIntent)
-            Log.d(TAG, "Full-screen activity launched")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to launch full-screen activity", e)
+        if (hasOverlayPermission) {
+            // Show overlay with "Solve puzzle" button
+            val overlayIntent = Intent(this, com.modernclockapp.AlarmOverlayService::class.java).apply {
+                putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+            }
+            startService(overlayIntent)
+            Log.d(TAG, "Overlay service launched")
+        } else {
+            // Fallback to direct activity launch
+            val fullScreenIntent = Intent(this, AlarmDismissActivity::class.java).apply {
+                putExtra(AlarmScheduler.EXTRA_ALARM_ID, alarmId)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            
+            try {
+                startActivity(fullScreenIntent)
+                Log.d(TAG, "Full-screen activity launched (no overlay permission)")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch full-screen activity", e)
+            }
         }
     }
     
