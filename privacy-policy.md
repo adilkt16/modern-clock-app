@@ -1,46 +1,56 @@
-# Privacy Policy for Modern Clock App
+# Privacy Policy — AltRise Clock (Modern Clock App)
 
-**Effective Date:** October 12, 2025
+Effective Date: November 5, 2025
 
 ## Overview
-Modern Clock App ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how our mobile application collects, uses, and protects your information.
+AltRise Clock ("we", "our", or "us") respects your privacy. We do not collect, store, or share personal data on our servers. All alarm data and preferences remain on your device.
 
 ## Information We Collect
-Our app may collect and store the following information locally on your device:
-- Alarm settings and preferences
-- Clock display preferences
-- App usage data for functionality
+We do not collect personally identifiable information (PII). The app stores only the data required for alarm functionality, locally on your device:
+- Alarm configurations (time, label, repeat options, end time)
+- App preferences (theme, UI settings)
 
-## How We Use Your Information
-The information collected is used solely to:
-- Provide clock and alarm functionality
-- Save your preferences and settings
-- Ensure proper app operation
+No account is required. No cloud sync is performed. We do not transmit your data to any external server.
 
-## Data Storage
-- All data is stored locally on your device
-- We do not transmit your personal data to external servers
-- We do not share your information with third parties
+## How We Use Your Data
+- Schedule and trigger alarms reliably, even if the device is locked or sleeping
+- Show alarm notifications and an over-the-app alarm screen so you can dismiss alarms
+- Remember your preferences and improve your in‑app experience
 
-## Permissions
-Our app may request the following permissions:
-- **Alarm/Clock permissions**: To set and manage alarms
-- **Notification permissions**: To display alarm notifications
-- **Wake device permissions**: To ensure alarms work when device is sleeping
+## Permissions We Request
+The app requests only the permissions necessary for alarm functionality:
+- `POST_NOTIFICATIONS` — to show alarm notifications (Android 13+)
+- `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM` — to ring alarms at the exact time
+- `WAKE_LOCK` — to briefly wake the device so alarms can ring
+- `FOREGROUND_SERVICE` (+ special use subtype) — to run a foreground service while an alarm is active
+- `RECEIVE_BOOT_COMPLETED` — to restore alarms after the device restarts
+- `SYSTEM_ALERT_WINDOW` (Display over other apps) — to show a full‑screen alarm overlay so you can quickly solve the puzzle or dismiss the alarm
+- `VIBRATE` — to provide haptic feedback and alarm vibration (if enabled)
 
-## Data Security
-We implement appropriate security measures to protect your information stored locally on your device.
+These permissions are used only for their stated purposes and can be controlled in your device settings.
 
-## Children's Privacy
-Our app does not knowingly collect personal information from children under 13.
+## Data Storage & Sharing
+- All alarm data is stored locally on your device.
+- We do not sell, rent, or share your data with third parties.
+- We do not use third‑party analytics or advertising SDKs in this app.
+
+## Security
+We apply reasonable technical measures to protect data stored locally by the app. Please protect your device with a passcode or biometric lock to prevent unauthorized access.
+
+## Children’s Privacy
+This app is not directed to children under 13. We do not knowingly collect personal information from children.
+
+## Your Choices
+- You may revoke granted permissions at any time in your device’s Settings.
+- You may delete the app to remove all locally stored data.
 
 ## Changes to This Policy
-We may update this Privacy Policy from time to time. Any changes will be posted with a new effective date.
+We may update this policy as our app evolves or to comply with legal requirements. We will update the “Effective Date” above when changes are made.
 
-## Contact Information
-If you have questions about this Privacy Policy, please contact us at:
+## Contact
+If you have questions about this Privacy Policy, contact us:
 - Email: adilkt16@gmail.com
 - Developer: ADIL
 
 ---
-*This privacy policy was last updated on October 12, 2025.*
+Last updated: November 5, 2025
