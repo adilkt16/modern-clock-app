@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -41,13 +42,17 @@ class SettingsActivity : Activity() {
             )
         }
         
-        // ScrollView for content
+        // Determine status bar height for safe-area padding
+        val statusBarHeight = resources.getIdentifier("status_bar_height", "dimen", "android").let { id ->
+            if (id > 0) resources.getDimensionPixelSize(id) else 60
+        }
+        // ScrollView for content with top padding below status bar
         val scrollView = ScrollView(this).apply {
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
-            setPadding(40, 60, 40, 40)
+            setPadding(40, statusBarHeight + 24, 40, 40)
         }
         
         // Content container
@@ -59,7 +64,7 @@ class SettingsActivity : Activity() {
             )
         }
         
-        // Header with back button
+        // Header with back button (inside its own container for separation)
         val headerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
@@ -69,35 +74,48 @@ class SettingsActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         
-        // Back button
-        val backButton = Button(this).apply {
-            text = "←"
-            textSize = 24f
+        // Back text button replacing icon for better alignment
+        val backButton = TextView(this).apply {
+            text = "Back"
+            textSize = 18f
             setTextColor(Color.WHITE)
-            background = ContextCompat.getDrawable(this@SettingsActivity, android.R.drawable.btn_default)?.apply {
-                setTint(Color.parseColor("#4CAF50"))
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(20, 10, 20, 10)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 24, 0) }
+            // Small rounded border
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 20f * resources.displayMetrics.density
+                setStroke((2 * resources.displayMetrics.density).toInt(), Color.parseColor("#31A82A"))
+                setColor(Color.TRANSPARENT)
             }
-            layoutParams = LinearLayout.LayoutParams(80, 80)
+            isClickable = true
+            isFocusable = true
             setOnClickListener { finish() }
+            contentDescription = "Go back"
         }
         
         // Settings title
         val titleText = TextView(this).apply {
             text = "Settings"
-            textSize = 32f
+            textSize = 30f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            gravity = Gravity.CENTER_VERTICAL
+            setShadowLayer(12f, 0f, 2f, Color.parseColor("#1C2F6D"))
         }
         
         headerLayout.addView(backButton)
         headerLayout.addView(titleText)
         contentLayout.addView(headerLayout)
+        // Divider line
+        contentLayout.addView(View(this).apply {
+            setBackgroundColor(Color.parseColor("#22304A"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 2).apply { setMargins(0, 24, 0, 24) }
+        })
         
         // Add spacing
         contentLayout.addView(View(this).apply {

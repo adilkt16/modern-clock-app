@@ -3,7 +3,7 @@
 # Build and Install script for Modern Clock App
 # This script builds the app and automatically installs it to a connected USB device
 
-echo "🏗️  Building and Installing Modern Clock App..."
+echo "🏗️  Building and Installing AltRise Clock App..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -43,16 +43,15 @@ fi
 
 # Check if device is connected
 print_status "Checking for connected devices..."
-DEVICE_COUNT=$(adb devices | grep -w "device" | wc -l)
-
-if [ $DEVICE_COUNT -eq 0 ]; then
+DEVICE=$(adb devices | awk '/\tdevice$/{print $1; exit}')
+if [ -z "$DEVICE" ]; then
     print_error "No device connected via USB. Please connect your device and enable USB debugging."
     print_status "Run 'adb devices' to check connection."
     exit 1
 fi
 
-print_status "Device connected! ✅"
-adb devices
+print_status "Device connected: $DEVICE ✅"
+ADB="adb -s $DEVICE"
 
 # Clean previous builds
 print_status "Cleaning previous builds..."
@@ -82,13 +81,16 @@ if [ ! -f "$APK_PATH" ]; then
     exit 1
 fi
 
+# App package name
+PKG="com.altrise.clockapp"
+
 # Uninstall old version (ignore errors if app not installed)
 print_status "Uninstalling old version (if exists)..."
-adb uninstall com.modernclockapp 2>/dev/null
+$ADB uninstall "$PKG" 2>/dev/null
 
 # Install new APK
 print_highlight "Installing APK to device..."
-adb install -r "$APK_PATH"
+$ADB install -r "$APK_PATH"
 
 if [ $? -ne 0 ]; then
     print_error "Installation failed!"
@@ -106,6 +108,6 @@ read -p "Do you want to launch the app now? (y/n): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     print_status "Launching app..."
-    adb shell am start -n com.modernclockapp/.MainActivity
+    $ADB shell am start -n com.altrise.clockapp/com.altrise.clockapp.MainActivity
     print_status "App launched! ✅"
 fi

@@ -114,11 +114,23 @@ class MainActivity : Activity() {
             setPadding(32, 60, 32, 60)
         }
         
-        // AltRise Logo and Title in horizontal layout
+        // Safe-area top wrapper to avoid status bar overlap
+        val topWrapper = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val statusBarHeight = resources.getIdentifier("status_bar_height", "dimen", "android").let { id ->
+                if (id > 0) resources.getDimensionPixelSize(id) else 60
+            }
+            setPadding(0, statusBarHeight + 12, 0, 32)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        // AltRise Logo and Title row
         val logoContainer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, 0, 0, 40)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -147,26 +159,49 @@ class MainActivity : Activity() {
             )
         }
         
-        // Settings button
-        val settingsButton = Button(this).apply {
-            text = "⚙️"
+        // Settings text button (aligned baseline with title)
+        val settingsText = TextView(this).apply {
+            text = "Settings"
             textSize = 18f
             setTextColor(Color.WHITE)
-            background = android.graphics.drawable.GradientDrawable().apply {
-                shape = android.graphics.drawable.GradientDrawable.OVAL
-                setColor(Color.parseColor("#4CAF50"))
-                setStroke(2, Color.parseColor("#2E7D32"))
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(16, 8, 16, 8)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(20, 0, 0, 0)
+                gravity = Gravity.CENTER_VERTICAL
             }
-            layoutParams = LinearLayout.LayoutParams(80, 80)
+            // Small rounded border
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 20f * resources.displayMetrics.density
+                setStroke((2 * resources.displayMetrics.density).toInt(), Color.parseColor("#E87316"))
+                setColor(Color.TRANSPARENT)
+            }
+            isClickable = true
+            isFocusable = true
             setOnClickListener {
+                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 val intent = Intent(this@MainActivity, SettingsActivity::class.java)
                 startActivityForResult(intent, 1001)
             }
+            contentDescription = "Open settings"
         }
         
-        logoContainer.addView(logo)
-        logoContainer.addView(title)
-        logoContainer.addView(settingsButton)
+    logoContainer.addView(logo)
+    logoContainer.addView(title)
+    logoContainer.addView(settingsText)
+        topWrapper.addView(logoContainer)
+        // Divider line for subtle separation
+        val headerDivider = View(this).apply {
+            setBackgroundColor(Color.parseColor("#22304A"))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                2
+            ).apply { setMargins(0, 24, 0, 24) }
+        }
+        topWrapper.addView(headerDivider)
         
         // Glass card for clock display
         val clockCard = LinearLayout(this).apply {
@@ -199,8 +234,11 @@ class MainActivity : Activity() {
             letterSpacing = 0.1f
         }
         
-        clockCard.addView(timeDisplay)
-        clockCard.addView(dateDisplay)
+    clockCard.addView(timeDisplay)
+    clockCard.addView(dateDisplay)
+
+    // Insert topWrapper before rest of content
+    layout.addView(topWrapper)
         
         // Alarm section title
         val alarmTitle = TextView(this).apply {
@@ -258,22 +296,28 @@ class MainActivity : Activity() {
         ampmToggle = ToggleButton(this).apply {
             textOn = "PM"
             textOff = "AM"
-            textSize = 12f
+            textSize = 16f
             typeface = Typeface.DEFAULT_BOLD
-            setBackgroundResource(R.drawable.bg_toggle_button)
-            layoutParams = LinearLayout.LayoutParams(80, 80)
-            
-            // Set text color based on state
-            setOnCheckedChangeListener { button, isChecked ->
-                if (isChecked) {
-                    button.setTextColor(Color.WHITE) // White text on blue background
-                } else {
-                    button.setTextColor(Color.parseColor("#3F51B5")) // Blue text on white background
+            setPadding(12, 8, 12, 8)
+            layoutParams = LinearLayout.LayoutParams(120, 72).apply { setMargins(16, 0, 0, 0) }
+            // Custom dynamic background for clearer state indication using brand colors
+            fun updateAmpmStyle(isPmState: Boolean) {
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = 20f
+                    colors = if (isPmState) {
+                        intArrayOf(Color.parseColor("#31A82A"), Color.parseColor("#46C43E"))
+                    } else {
+                        intArrayOf(Color.parseColor("#1F1F1F"), Color.parseColor("#2A2A2A"))
+                    }
+                    setStroke(2, if (isPmState) Color.parseColor("#2A7F25") else Color.parseColor("#444444"))
                 }
-                isPm = isChecked
+                setTextColor(if (isPmState) Color.WHITE else Color.parseColor("#E8EAF6"))
             }
-            // Initial state
-            setTextColor(Color.parseColor("#3F51B5"))
+            updateAmpmStyle(isPm)
+            setOnCheckedChangeListener { _, isChecked ->
+                isPm = isChecked
+                updateAmpmStyle(isPm)
+            }
         }
         timeRow.addView(hourPicker)
         timeRow.addView(colon)
@@ -285,30 +329,20 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-                setMargins(0, 6, 0, 0)
+                setMargins(0, 8, 0, 0)
             }
         }
-        val hourLabel = TextView(this).apply {
-            text = "Hour"
-            textSize = 12f
-            setTextColor(Color.parseColor("#E8EAF6"))
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 12, 0) }
+        fun buildUnderLabel(text: String): TextView = TextView(this).apply {
+            this.text = text
+            textSize = 11f
+            setTextColor(Color.parseColor("#B0B8D4"))
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
-        val spacer = TextView(this).apply { text = "  " }
-        val minuteLabel = TextView(this).apply {
-            text = "Minute"
-            textSize = 12f
-            setTextColor(Color.parseColor("#E8EAF6"))
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 12, 0) }
-        }
-        val ampmLabel = TextView(this).apply {
-            text = "AM/PM"
-            textSize = 12f
-            setTextColor(Color.parseColor("#E8EAF6"))
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(12, 0, 0, 0) }
-        }
+        val hourLabel = buildUnderLabel("Hour")
+        val minuteLabel = buildUnderLabel("Minute")
+        val ampmLabel = buildUnderLabel("AM/PM")
         labelsRow.addView(hourLabel)
-        labelsRow.addView(spacer)
         labelsRow.addView(minuteLabel)
         labelsRow.addView(ampmLabel)
 
@@ -531,8 +565,7 @@ class MainActivity : Activity() {
             letterSpacing = 0.1f
         }
         
-        // Add all views
-        layout.addView(logoContainer)
+    // Add all views (header already added via topWrapper)
         layout.addView(clockCard)
         layout.addView(alarmTitle)
         layout.addView(alarmCard)
