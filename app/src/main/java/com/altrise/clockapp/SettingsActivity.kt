@@ -27,13 +27,14 @@ class SettingsActivity : Activity() {
     }
     
     private fun setupUI() {
-        // Main container with matching gradient
+        // Main container with matching improved gradient - better readability
         val mainLayout = FrameLayout(this).apply {
             background = android.graphics.drawable.GradientDrawable().apply {
-                orientation = android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM
+                orientation = android.graphics.drawable.GradientDrawable.Orientation.TL_BR
                 colors = intArrayOf(
-                    Color.parseColor("#1A237E"), // Deep indigo
-                    Color.parseColor("#3F51B5")  // Material indigo
+                    Color.parseColor("#C8B6E2"), // Deeper lavender
+                    Color.parseColor("#A0D8F1"), // Rich sky blue
+                    Color.parseColor("#B0E8D8")  // Deeper mint
                 )
             }
             layoutParams = FrameLayout.LayoutParams(
@@ -74,47 +75,70 @@ class SettingsActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         
-        // Back text button replacing icon for better alignment
+        // Improved back button with better contrast
         val backButton = TextView(this).apply {
-            text = "Back"
-            textSize = 18f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(20, 10, 20, 10)
+            text = "← Back"
+            textSize = 16f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for strong contrast
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.03f
+            setPadding(24, 12, 24, 12)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { setMargins(0, 0, 24, 0) }
-            // Small rounded border
+            // Stronger glassmorphic background
             background = android.graphics.drawable.GradientDrawable().apply {
-                cornerRadius = 20f * resources.displayMetrics.density
-                setStroke((2 * resources.displayMetrics.density).toInt(), Color.parseColor("#31A82A"))
-                setColor(Color.TRANSPARENT)
+                cornerRadius = 24f * resources.displayMetrics.density
+                setColor(Color.parseColor("#70FFFFFF"))
+                setStroke((2f * resources.displayMetrics.density).toInt(), Color.parseColor("#90FFFFFF"))
             }
+            elevation = 2f * resources.displayMetrics.density
             isClickable = true
             isFocusable = true
+            // Smooth press animation
+            setOnTouchListener { v, event ->
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        v.animate().scaleX(0.92f).scaleY(0.92f).setDuration(100).start()
+                    }
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                    }
+                }
+                false
+            }
             setOnClickListener { finish() }
             contentDescription = "Go back"
         }
         
-        // Settings title
+        // Settings title with strong contrast
         val titleText = TextView(this).apply {
             text = "Settings"
-            textSize = 30f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
+            textSize = 32f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for strong contrast
+            typeface = Typeface.create("sans-serif-light", Typeface.BOLD)
+            letterSpacing = 0.05f
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             gravity = Gravity.CENTER_VERTICAL
-            setShadowLayer(12f, 0f, 2f, Color.parseColor("#1C2F6D"))
+            setShadowLayer(2f, 0f, 1f, Color.parseColor("#30FFFFFF"))
         }
         
         headerLayout.addView(backButton)
         headerLayout.addView(titleText)
         contentLayout.addView(headerLayout)
-        // Divider line
+        
+        // Divider with better visibility
         contentLayout.addView(View(this).apply {
-            setBackgroundColor(Color.parseColor("#22304A"))
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 2).apply { setMargins(0, 24, 0, 24) }
+            background = android.graphics.drawable.GradientDrawable().apply {
+                orientation = android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT
+                colors = intArrayOf(
+                    Color.TRANSPARENT,
+                    Color.parseColor("#50000000"),
+                    Color.TRANSPARENT
+                )
+            }
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 2).apply { setMargins(0, 28, 0, 32) }
         })
         
         // Add spacing
@@ -146,23 +170,54 @@ class SettingsActivity : Activity() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setPadding(0, 20, 0, 20)
+            setPadding(0, 12, 0, 20)
         }
         
-        // Section title
+        // Section title with better contrast
         val sectionTitle = TextView(this).apply {
             text = "Display"
-            textSize = 20f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
+            textSize = 18f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.04f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding(4, 0, 0, 16)
+        }
+        section.addView(sectionTitle)
+        
+        // Card container with improved contrast
+        val cardContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.parseColor("#75FFFFFF")) // More opaque glass effect
+                cornerRadius = 32f
+                setStroke(2, Color.parseColor("#AAFFFFFF")) // Thicker, visible border
+            }
+            elevation = 6f // Increased elevation for depth
+            setPadding(28, 24, 28, 24)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+        }
+
+        // Version label with strong contrast
+        val versionLabel = TextView(this).apply {
+            text = "Version"
+            textSize = 16f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+            typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
-        section.addView(sectionTitle)
         
-        // Time format switch
         val timeFormatLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
@@ -170,13 +225,13 @@ class SettingsActivity : Activity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(20, 20, 20, 20)
         }
         
         val timeFormatLabel = TextView(this).apply {
             text = "24-Hour Format"
             textSize = 16f
-            setTextColor(Color.WHITE)
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -197,7 +252,8 @@ class SettingsActivity : Activity() {
         
         timeFormatLayout.addView(timeFormatLabel)
         timeFormatLayout.addView(timeFormatSwitch)
-        section.addView(timeFormatLayout)
+        cardContainer.addView(timeFormatLayout)
+        section.addView(cardContainer)
         
         return section
     }
@@ -209,19 +265,21 @@ class SettingsActivity : Activity() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setPadding(0, 20, 0, 20)
+            setPadding(0, 12, 0, 20)
         }
         
-        // Section title
+        // Section title with better contrast
         val sectionTitle = TextView(this).apply {
             text = "App Information"
-            textSize = 20f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
+            textSize = 18f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.04f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
+            setPadding(4, 0, 0, 16)
         }
         section.addView(sectionTitle)
         
@@ -357,7 +415,7 @@ class SettingsActivity : Activity() {
         val hiddenText = TextView(this).apply {
             text = hiddenValue
             textSize = 14f
-            setTextColor(Color.parseColor("#81C784"))
+            setTextColor(Color.parseColor("#5B8FDB")) // Richer blue for better readability
             isClickable = true
             setOnClickListener {
                 // Copy to clipboard
@@ -404,7 +462,8 @@ class SettingsActivity : Activity() {
         val textView = TextView(this).apply {
             text = buttonText
             textSize = 16f
-            setTextColor(Color.parseColor("#81C784"))
+            setTextColor(Color.parseColor("#5B8FDB")) // Richer blue for better readability
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -415,7 +474,7 @@ class SettingsActivity : Activity() {
         val arrowText = TextView(this).apply {
             text = "→"
             textSize = 16f
-            setTextColor(Color.parseColor("#B0BEC5"))
+            setTextColor(Color.parseColor("#3A4560")) // Darker gray
         }
         
         layout.addView(textView)

@@ -91,14 +91,15 @@ class MainActivity : Activity() {
         val sharedPrefs = getSharedPreferences("ClockAppSettings", Context.MODE_PRIVATE)
         is24hFormat = sharedPrefs.getBoolean("is24hFormat", true)
         
-        // Main container with modern gradient background
+        // Main container with improved contrast - elegant gradient with better readability
         val mainLayout = FrameLayout(this).apply {
-            // Create a subtle gradient from dark blue to lighter blue
+            // Deeper gradient with better contrast while keeping modern feel
             background = android.graphics.drawable.GradientDrawable().apply {
-                orientation = android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM
+                orientation = android.graphics.drawable.GradientDrawable.Orientation.TL_BR
                 colors = intArrayOf(
-                    Color.parseColor("#1A237E"), // Deep indigo
-                    Color.parseColor("#3F51B5")  // Material indigo
+                    Color.parseColor("#C8B6E2"), // Deeper lavender
+                    Color.parseColor("#A0D8F1"), // Rich sky blue
+                    Color.parseColor("#B0E8D8")  // Deeper mint
                 )
             }
             layoutParams = FrameLayout.LayoutParams(
@@ -147,11 +148,12 @@ class MainActivity : Activity() {
         
         val title = TextView(this).apply {
             text = "AltRise"
-            textSize = 32f
-            setTextColor(Color.parseColor("#FFFFFF"))
+            textSize = 34f
+            setTextColor(Color.parseColor("#1A1F3A")) // Much darker blue for strong contrast
             gravity = Gravity.CENTER_VERTICAL
-            typeface = Typeface.DEFAULT_BOLD
-            setShadowLayer(8f, 0f, 2f, Color.parseColor("#4CAF50"))
+            typeface = Typeface.create("sans-serif-light", Typeface.BOLD)
+            letterSpacing = 0.05f
+            setShadowLayer(2f, 0f, 1f, Color.parseColor("#30FFFFFF"))
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -159,13 +161,14 @@ class MainActivity : Activity() {
             )
         }
         
-        // Settings text button (aligned baseline with title)
+        // Modern Settings button with improved contrast
         val settingsText = TextView(this).apply {
             text = "Settings"
-            textSize = 18f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(16, 8, 16, 8)
+            textSize = 16f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark text for readability
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.03f
+            setPadding(24, 12, 24, 12)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -173,65 +176,92 @@ class MainActivity : Activity() {
                 setMargins(20, 0, 0, 0)
                 gravity = Gravity.CENTER_VERTICAL
             }
-            // Small rounded border
+            // Stronger glassmorphic background with better visibility
             background = android.graphics.drawable.GradientDrawable().apply {
-                cornerRadius = 20f * resources.displayMetrics.density
-                setStroke((2 * resources.displayMetrics.density).toInt(), Color.parseColor("#E87316"))
-                setColor(Color.TRANSPARENT)
+                cornerRadius = 24f * resources.displayMetrics.density
+                setColor(Color.parseColor("#70FFFFFF")) // More opaque white
+                setStroke((2f * resources.displayMetrics.density).toInt(), Color.parseColor("#90FFFFFF"))
             }
+            elevation = 2f * resources.displayMetrics.density
             isClickable = true
             isFocusable = true
+            // Smooth press animation
+            setOnTouchListener { v, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        v.animate().scaleX(0.92f).scaleY(0.92f).setDuration(100).start()
+                        v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+                    }
+                }
+                false
+            }
             setOnClickListener {
-                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 val intent = Intent(this@MainActivity, SettingsActivity::class.java)
                 startActivityForResult(intent, 1001)
             }
             contentDescription = "Open settings"
         }
         
-    logoContainer.addView(logo)
-    logoContainer.addView(title)
-    logoContainer.addView(settingsText)
+        logoContainer.addView(logo)
+        logoContainer.addView(title)
+        logoContainer.addView(settingsText)
         topWrapper.addView(logoContainer)
-        // Divider line for subtle separation
+        // Modern divider with better visibility
         val headerDivider = View(this).apply {
-            setBackgroundColor(Color.parseColor("#22304A"))
+            background = android.graphics.drawable.GradientDrawable().apply {
+                orientation = android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT
+                colors = intArrayOf(
+                    Color.TRANSPARENT,
+                    Color.parseColor("#50000000"), // Darker for visibility
+                    Color.TRANSPARENT
+                )
+            }
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 2
-            ).apply { setMargins(0, 24, 0, 24) }
+            ).apply { setMargins(0, 24, 0, 28) }
         }
         topWrapper.addView(headerDivider)
         
-        // Glass card for clock display
+        // Stronger glass card for clock display with better contrast
         val clockCard = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundResource(R.drawable.bg_glass_card)
-            setPadding(40, 50, 40, 50)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 36f * resources.displayMetrics.density
+                setColor(Color.parseColor("#75FFFFFF")) // More opaque for better readability
+                setStroke((2f * resources.displayMetrics.density).toInt(), Color.parseColor("#AAFFFFFF"))
+            }
+            elevation = 10f * resources.displayMetrics.density
+            setPadding(44, 56, 44, 56)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 0, 0, 30)
+                setMargins(0, 0, 0, 32)
             }
         }
         
-        // Time display with clean modern styling
+        // Time display with strong contrast for readability
         timeDisplay = TextView(this).apply {
-            textSize = 56f
-            setTextColor(Color.parseColor("#FFFFFF"))
+            textSize = 68f
+            setTextColor(Color.parseColor("#0A0F1E")) // Very dark for maximum contrast
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            setShadowLayer(8f, 0f, 2f, Color.parseColor("#3F51B5"))
+            typeface = Typeface.create("sans-serif-thin", Typeface.NORMAL)
+            letterSpacing = 0.08f
+            setShadowLayer(3f, 0f, 2f, Color.parseColor("#305080C0")) // Subtle blue shadow
         }
         
-        // Date display
+        // Date display with improved contrast
         dateDisplay = TextView(this).apply {
-            textSize = 18f
-            setTextColor(Color.parseColor("#E8EAF6"))
+            textSize = 16f
+            setTextColor(Color.parseColor("#3A4560")) // Darker gray for readability
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+            typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
             setPadding(0, 20, 0, 0)
-            letterSpacing = 0.1f
+            letterSpacing = 0.12f
         }
         
     clockCard.addView(timeDisplay)
@@ -240,27 +270,32 @@ class MainActivity : Activity() {
     // Insert topWrapper before rest of content
     layout.addView(topWrapper)
         
-        // Alarm section title
+        // Section title with strong contrast
         val alarmTitle = TextView(this).apply {
-            text = "⏰ ALARM CONTROL"
-            textSize = 20f
-            setTextColor(Color.parseColor("#FFFFFF"))
+            text = "⏰ Your Alarms"
+            textSize = 22f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for strong contrast
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(0, 40, 0, 30)
-            letterSpacing = 0.15f
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setPadding(0, 48, 0, 32)
+            letterSpacing = 0.06f
         }
         
-        // Glass card for alarm controls
+        // Improved glass card for alarm controls with better visibility
         val alarmCard = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundResource(R.drawable.bg_glass_card)
-            setPadding(30, 30, 30, 30)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 32f * resources.displayMetrics.density
+                setColor(Color.parseColor("#75FFFFFF")) // More opaque for readability
+                setStroke((2f * resources.displayMetrics.density).toInt(), Color.parseColor("#AAFFFFFF"))
+            }
+            elevation = 8f * resources.displayMetrics.density
+            setPadding(32, 36, 32, 36)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 0, 0, 30)
+                setMargins(0, 0, 0, 32)
             }
         }
         
@@ -280,9 +315,10 @@ class MainActivity : Activity() {
     attachNumberPickerStyleHooks(hourPicker)
         val colon = TextView(this).apply {
             text = ":"
-            textSize = 24f
-            setTextColor(Color.WHITE)
-            setPadding(4, 0, 4, 0)
+            textSize = 28f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for visibility
+            typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+            setPadding(6, 0, 6, 0)
         }
         minutePicker = NumberPicker(this).apply {
             minValue = 0
@@ -296,27 +332,32 @@ class MainActivity : Activity() {
         ampmToggle = ToggleButton(this).apply {
             textOn = "PM"
             textOff = "AM"
-            textSize = 16f
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(12, 8, 12, 8)
-            layoutParams = LinearLayout.LayoutParams(120, 72).apply { setMargins(16, 0, 0, 0) }
-            // Custom dynamic background for clearer state indication using brand colors
+            textSize = 15f
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.04f
+            setPadding(14, 10, 14, 10)
+            layoutParams = LinearLayout.LayoutParams(110, 70).apply { setMargins(20, 0, 0, 0) }
+            // Improved toggle with stronger colors for better state distinction
             fun updateAmpmStyle(isPmState: Boolean) {
                 background = android.graphics.drawable.GradientDrawable().apply {
-                    cornerRadius = 20f
-                    colors = if (isPmState) {
-                        intArrayOf(Color.parseColor("#31A82A"), Color.parseColor("#46C43E"))
+                    cornerRadius = 20f * resources.displayMetrics.density
+                    if (isPmState) {
+                        colors = intArrayOf(Color.parseColor("#5B8FDB"), Color.parseColor("#7BA8E8")) // Richer blue gradient
                     } else {
-                        intArrayOf(Color.parseColor("#1F1F1F"), Color.parseColor("#2A2A2A"))
+                        setColor(Color.parseColor("#D8DCE8")) // Stronger neutral gray
                     }
-                    setStroke(2, if (isPmState) Color.parseColor("#2A7F25") else Color.parseColor("#444444"))
+                    setStroke((2f * resources.displayMetrics.density).toInt(), 
+                             if (isPmState) Color.parseColor("#4070B8") else Color.parseColor("#B0B8C8"))
                 }
-                setTextColor(if (isPmState) Color.WHITE else Color.parseColor("#E8EAF6"))
+                setTextColor(if (isPmState) Color.WHITE else Color.parseColor("#3A4560"))
+                // Smooth scale animation
+                animate().scaleX(if (isPmState) 1.05f else 1f).scaleY(if (isPmState) 1.05f else 1f).setDuration(200).start()
             }
             updateAmpmStyle(isPm)
             setOnCheckedChangeListener { _, isChecked ->
                 isPm = isChecked
                 updateAmpmStyle(isPm)
+                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             }
         }
         timeRow.addView(hourPicker)
@@ -346,19 +387,27 @@ class MainActivity : Activity() {
         labelsRow.addView(minuteLabel)
         labelsRow.addView(ampmLabel)
 
-        // 24H format toggle row
+        // 24H format toggle row with improved styling
         val formatRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 20f * resources.displayMetrics.density
+                setColor(Color.parseColor("#65FFFFFF")) // Subtle glass background
+                setStroke((1.5f * resources.displayMetrics.density).toInt(), Color.parseColor("#90FFFFFF"))
+            }
+            elevation = 3f * resources.displayMetrics.density
+            setPadding(28, 20, 28, 20)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { setMargins(0, 16, 0, 8) }
         }
         val formatLabel = TextView(this).apply {
-            text = "24H FORMAT"
-            textSize = 14f
-            setTextColor(Color.parseColor("#E8EAF6"))
+            text = "24-Hour Format"
+            textSize = 16f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         val formatSwitch = Switch(this).apply { isChecked = true }
@@ -412,7 +461,7 @@ class MainActivity : Activity() {
         formatRow.addView(formatLabel)
         formatRow.addView(formatSwitch)
 
-        // End time (optional) UI
+        // End time (optional) UI with improved styling
         val endRowContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 16, 0, 0)
@@ -420,11 +469,19 @@ class MainActivity : Activity() {
         val endHeaderRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 20f * resources.displayMetrics.density
+                setColor(Color.parseColor("#65FFFFFF")) // Matching glass background
+                setStroke((1.5f * resources.displayMetrics.density).toInt(), Color.parseColor("#90FFFFFF"))
+            }
+            elevation = 3f * resources.displayMetrics.density
+            setPadding(28, 20, 28, 20)
         }
         val endLabel = TextView(this).apply {
-            text = "END TIME (OPTIONAL)"
-            textSize = 14f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            text = "End Time (Optional)"
+            textSize = 16f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         endTimeSwitch = Switch(this).apply { isChecked = false }
@@ -513,35 +570,69 @@ class MainActivity : Activity() {
             }
         }
         
-        // Set alarm button with modern gradient
+        // Set alarm button with richer gradient and better contrast
         setAlarmButton = Button(this).apply {
-            text = "SET ALARM"
+            text = "Set Alarm"
             textSize = 16f
             setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            setBackgroundResource(R.drawable.bg_primary_button)
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.04f
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 24f * resources.displayMetrics.density
+                colors = intArrayOf(Color.parseColor("#5B8FDB"), Color.parseColor("#7BA8E8")) // Richer blue
+            }
+            elevation = 6f * resources.displayMetrics.density
             layoutParams = LinearLayout.LayoutParams(
                 0,
-                120,
+                (56 * resources.displayMetrics.density).toInt(),
                 1f
             ).apply {
-                setMargins(0, 0, 15, 0)
+                setMargins(0, 0, 12, 0)
+            }
+            // Smooth press animation
+            setOnTouchListener { v, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        v.animate().scaleX(0.95f).scaleY(0.95f).alpha(0.85f).setDuration(100).start()
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        v.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(150).start()
+                    }
+                }
+                false
             }
         }
         
-        // Clear alarm button with modern outline style
+        // Clear alarm button with stronger red for better visibility
         clearAlarmButton = Button(this).apply {
-            text = "CLEAR"
+            text = "Clear"
             textSize = 16f
-            setTextColor(Color.parseColor("#3F51B5"))
-            typeface = Typeface.DEFAULT_BOLD
-            setBackgroundResource(R.drawable.bg_secondary_button)
+            setTextColor(Color.parseColor("#DC2626")) // Stronger red
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.04f
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 24f * resources.displayMetrics.density
+                setColor(Color.TRANSPARENT)
+                setStroke((2.5f * resources.displayMetrics.density).toInt(), Color.parseColor("#DC2626"))
+            }
             layoutParams = LinearLayout.LayoutParams(
                 0,
-                120,
+                (56 * resources.displayMetrics.density).toInt(),
                 1f
             ).apply {
-                setMargins(15, 0, 0, 0)
+                setMargins(12, 0, 0, 0)
+            }
+            // Smooth press animation
+            setOnTouchListener { v, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        v.animate().scaleX(0.95f).scaleY(0.95f).alpha(0.7f).setDuration(100).start()
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        v.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(150).start()
+                    }
+                }
+                false
             }
         }
         
@@ -554,15 +645,15 @@ class MainActivity : Activity() {
     alarmCard.addView(formatRow)
     alarmCard.addView(buttonContainer)
         
-        // Alarm status display
+        // Alarm status display with better contrast
         alarmTimeText = TextView(this).apply {
-            text = "NO ALARM SET"
-            textSize = 16f
-            setTextColor(Color.parseColor("#B0B8D4"))
+            text = "No alarm set"
+            textSize = 15f
+            setTextColor(Color.parseColor("#5A6580")) // Darker gray for readability
+            typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            setPadding(20, 30, 20, 20)
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
-            letterSpacing = 0.1f
+            letterSpacing = 0.03f
+            setPadding(20, 32, 20, 20)
         }
         
     // Add all views (header already added via topWrapper)
