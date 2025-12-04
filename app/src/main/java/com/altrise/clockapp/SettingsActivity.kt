@@ -155,6 +155,9 @@ class SettingsActivity : Activity() {
         // App Information Section
         contentLayout.addView(createAppInfoSection())
         
+        // Buy Me a Coffee Section - Support Development
+        contentLayout.addView(createBuyMeCoffeeSection())
+        
         // Legal Section
         contentLayout.addView(createLegalSection())
         
@@ -287,11 +290,168 @@ class SettingsActivity : Activity() {
         val versionLayout = createInfoRow("Version", getAppVersion())
         section.addView(versionLayout)
         
-        // Developer contact (hidden by default)
-        val contactLayout = createExpandableInfoRow("Developer Contact", "adilkt16@gmail.com")
-        section.addView(contactLayout)
+        return section
+    }
+    
+    private fun createBuyMeCoffeeSection(): LinearLayout {
+        val section = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding(0, 12, 0, 20)
+        }
+        
+        // Section title
+        val sectionTitle = TextView(this).apply {
+            text = "Support Development"
+            textSize = 18f
+            setTextColor(Color.parseColor("#1A1F3A"))
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.04f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding(4, 0, 0, 16)
+        }
+        section.addView(sectionTitle)
+        
+        // Attractive Buy Me a Coffee card
+        val coffeeCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 32f
+                // Beautiful gradient from warm yellow to orange
+                colors = intArrayOf(
+                    Color.parseColor("#FFF4E6"),
+                    Color.parseColor("#FFE8CC")
+                )
+                setStroke(2, Color.parseColor("#FFD580"))
+            }
+            elevation = 6f
+            setPadding(32, 28, 32, 28)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 16)
+            }
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                openBuyMeCoffee()
+            }
+        }
+        
+        // Coffee emoji and title
+        val titleRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        val coffeeEmoji = TextView(this).apply {
+            text = "☕"
+            textSize = 42f
+            setPadding(0, 0, 16, 0)
+        }
+        
+        val titleText = TextView(this).apply {
+            text = "Buy Me a Coffee"
+            textSize = 22f
+            setTextColor(Color.parseColor("#1A1F3A"))
+            typeface = Typeface.create("sans-serif-bold", Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+        
+        titleRow.addView(coffeeEmoji)
+        titleRow.addView(titleText)
+        
+        // Compelling message
+        val messageText = TextView(this).apply {
+            text = "Love this app? ❤️\n\nYour support keeps me motivated to create more amazing features and maintain this app for free. Every coffee counts!"
+            textSize = 15f
+            setTextColor(Color.parseColor("#3A4560"))
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            lineHeight = (22 * resources.displayMetrics.density).toInt()
+            setPadding(0, 16, 0, 20)
+        }
+        
+        // Call-to-action button
+        val ctaButton = Button(this).apply {
+            text = "☕ Support with Coffee"
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            letterSpacing = 0.04f
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 24f * resources.displayMetrics.density
+                colors = intArrayOf(
+                    Color.parseColor("#FF9800"),
+                    Color.parseColor("#FF6F00")
+                )
+            }
+            elevation = 4f
+            setPadding(32, 18, 32, 18)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setOnClickListener {
+                openBuyMeCoffee()
+            }
+        }
+        
+        // Add touch animation
+        ctaButton.setOnTouchListener { v, event ->
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    v.animate().scaleX(0.95f).scaleY(0.95f).setDuration(100).start()
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+                }
+            }
+            false
+        }
+        
+        coffeeCard.addView(titleRow)
+        coffeeCard.addView(messageText)
+        coffeeCard.addView(ctaButton)
+        
+        section.addView(coffeeCard)
+        
+        // Small thank you note
+        val thankYouText = TextView(this).apply {
+            text = "Thank you for using ClockApp! 🙏"
+            textSize = 13f
+            setTextColor(Color.parseColor("#7A8099"))
+            typeface = Typeface.create("sans-serif-light", Typeface.ITALIC)
+            gravity = Gravity.CENTER
+            setPadding(20, 8, 20, 0)
+        }
+        section.addView(thankYouText)
         
         return section
+    }
+    
+    private fun openBuyMeCoffee() {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/a_k_t_16"))
+            startActivity(intent)
+            Toast.makeText(this, "☕ Thank you for your support!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Unable to open browser", Toast.LENGTH_SHORT).show()
+        }
     }
     
     private fun createLegalSection(): LinearLayout {
