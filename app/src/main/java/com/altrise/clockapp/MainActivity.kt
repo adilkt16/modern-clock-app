@@ -51,6 +51,8 @@ class MainActivity : Activity() {
     private lateinit var timeDisplay: TextView
     private lateinit var dateDisplay: TextView
     private lateinit var alarmTimeText: TextView
+    private lateinit var setAlarmsTitle: TextView  // Title for the set alarms section
+    private lateinit var setAlarmsContainer: LinearLayout  // Container for showing set alarms
     private lateinit var setAlarmButton: Button
     private lateinit var clearAlarmButton: Button
     // New compact time selectors
@@ -656,11 +658,34 @@ class MainActivity : Activity() {
             setPadding(20, 32, 20, 20)
         }
         
+        // Set Alarms Section Title (initially hidden)
+        setAlarmsTitle = TextView(this).apply {
+            text = "Set Alarms"
+            textSize = 20f
+            setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            letterSpacing = 0.05f
+            setPadding(4, 48, 0, 20)
+            visibility = View.GONE  // Hidden by default
+        }
+        
+        // Container for showing set alarms in beautiful cards (initially hidden)
+        setAlarmsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            visibility = View.GONE  // Hidden by default
+        }
+        
     // Add all views (header already added via topWrapper)
         layout.addView(clockCard)
         layout.addView(alarmTitle)
         layout.addView(alarmCard)
         layout.addView(alarmTimeText)
+        layout.addView(setAlarmsTitle)
+        layout.addView(setAlarmsContainer)
         
         scrollView.addView(layout)
         mainLayout.addView(scrollView)
@@ -680,6 +705,9 @@ class MainActivity : Activity() {
         
         // Load any existing alarms from storage
         loadExistingAlarm()
+        
+        // Update set alarms display section
+        updateSetAlarmsDisplay()
         
     // Start time updates and run once to avoid delay
     startTimeUpdate()
@@ -962,6 +990,167 @@ class MainActivity : Activity() {
         timeDisplay.text = timeText
     }
     
+    private fun updateSetAlarmsDisplay() {
+        // Clear existing alarm cards
+        setAlarmsContainer.removeAllViews()
+        
+        val enabledAlarms = alarmStorage.getEnabledAlarms()
+        
+        if (enabledAlarms.isEmpty()) {
+            // Hide the entire section when no alarms are set
+            setAlarmsTitle.visibility = View.GONE
+            setAlarmsContainer.visibility = View.GONE
+            return
+        }
+        
+        // Show the section when alarms exist
+        setAlarmsTitle.visibility = View.VISIBLE
+        setAlarmsContainer.visibility = View.VISIBLE
+        
+        // Create a card for each set alarm
+        val timeFormat = if (is24hFormat) SimpleDateFormat("HH:mm", Locale.getDefault())
+        else SimpleDateFormat("hh:mm a", Locale.getDefault())
+        
+        for (alarm in enabledAlarms) {
+            val alarmCard = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = 28f * resources.displayMetrics.density
+                    setColor(Color.parseColor("#75FFFFFF")) // Glassmorphic glass
+                    setStroke((2f * resources.displayMetrics.density).toInt(), Color.parseColor("#AAFFFFFF"))
+                }
+                elevation = 8f * resources.displayMetrics.density
+                setPadding(32, 28, 32, 28)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(0, 0, 0, 16)
+                }
+            }
+            
+            // Left side: Alarm icon and time info
+            val leftContainer = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+            
+            val alarmCal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, alarm.hourOfDay)
+                set(Calendar.MINUTE, alarm.minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
+            }
+            
+            val alarmTimeStr = timeFormat.format(alarmCal.time)
+            val friendly = friendlyInDuration(Calendar.getInstance(), alarmCal)
+            
+            // Alarm time display
+            val timeText = TextView(this).apply {
+                text = alarmTimeStr
+                textSize = 32f
+                setTextColor(Color.parseColor("#1A1F3A")) // Dark for readability
+                typeface = Typeface.create("sans-serif", Typeface.BOLD)
+                letterSpacing = 0.05f
+            }
+            
+            // Countdown text
+            val countdownText = TextView(this).apply {
+                text = "⏰ $friendly"
+                textSize = 14f
+                setTextColor(Color.parseColor("#5B8FDB")) // Richer blue
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                setPadding(0, 8, 0, 0)
+            }
+            
+            leftContainer.addView(timeText)
+            leftContainer.addView(countdownText)
+            
+            // Add end time info if configured
+            if (alarm.hasEndTime && alarm.endHourOfDay != null && alarm.endMinute != null) {
+                val endCal = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, alarm.endHourOfDay)
+                    set(Calendar.MINUTE, alarm.endMinute)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                    if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
+                    if (timeInMillis <= alarmCal.timeInMillis) add(Calendar.DAY_OF_MONTH, 1)
+                }
+                
+                val endTimeText = TextView(this).apply {
+                    text = "→ Stops at ${timeFormat.format(endCal.time)}"
+                    textSize = 12f
+                    setTextColor(Color.parseColor("#7A8099"))
+                    typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+                    setPadding(0, 4, 0, 0)
+                }
+                leftContainer.addView(endTimeText)
+            }
+            
+            // Right side: Delete button
+            val deleteButton = Button(this).apply {
+                text = "✕"
+                textSize = 20f
+                setTextColor(Color.parseColor("#DC2626"))
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = 16f * resources.displayMetrics.density
+                    setColor(Color.parseColor("#30DC2626")) // Subtle red tint
+                    setStroke((1.5f * resources.displayMetrics.density).toInt(), Color.parseColor("#DC2626"))
+                }
+                elevation = 2f * resources.displayMetrics.density
+                layoutParams = LinearLayout.LayoutParams(
+                    (56 * resources.displayMetrics.density).toInt(),
+                    (56 * resources.displayMetrics.density).toInt()
+                ).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                }
+                setOnClickListener {
+                    // Delete this specific alarm
+                    alarmScheduler.cancelAlarm(alarm.id)
+                    alarmStorage.deleteAlarm(alarm.id)
+                    
+                    // If this was the current alarm, clear it
+                    if (currentAlarmId == alarm.id) {
+                        currentAlarmId = null
+                        endTimeCalendar = null
+                        alarmTimeText.text = "NO ALARM SET"
+                        alarmTimeText.setTextColor(Color.parseColor("#B0B8D4"))
+                    }
+                    
+                    // Update displays
+                    updateSetAlarmsDisplay()
+                    updateNextAlarmDisplay()
+                    
+                    Toast.makeText(this@MainActivity, "🔕 Alarm deleted", Toast.LENGTH_SHORT).show()
+                }
+            }
+            
+            // Add scale animation on touch
+            deleteButton.setOnTouchListener { v, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        v.animate().scaleX(0.92f).scaleY(0.92f).setDuration(100).start()
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+                    }
+                }
+                false
+            }
+            
+            alarmCard.addView(leftContainer)
+            alarmCard.addView(deleteButton)
+            
+            setAlarmsContainer.addView(alarmCard)
+        }
+    }
+    
     private fun getNextUpcomingAlarm(): Alarm? {
         val enabledAlarms = alarmStorage.getEnabledAlarms()
         if (enabledAlarms.isEmpty()) return null
@@ -1061,6 +1250,9 @@ class MainActivity : Activity() {
 
         // Update the main display to show next upcoming alarm
         updateNextAlarmDisplay()
+        
+        // Update the set alarms display section
+        updateSetAlarmsDisplay()
 
         Toast.makeText(this, "⚡ ALARM SAVED & SCHEDULED: $alarmTimeStr — $friendly$endSuffix", Toast.LENGTH_LONG).show()
     }
@@ -1100,6 +1292,9 @@ class MainActivity : Activity() {
         
         // Update the main display to show next upcoming alarm
         updateNextAlarmDisplay()
+        
+        // Update the set alarms display section
+        updateSetAlarmsDisplay()
         
         Toast.makeText(this, "🔕 ALARM DISARMED", Toast.LENGTH_SHORT).show()
     }
